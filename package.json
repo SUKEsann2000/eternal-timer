@@ -1,6 +1,6 @@
 {
   "name": "eternal-timer",
-  "version": "1.0.2",
+  "version": "1.2.1",
   "description": "timer for node.js package",
   "main": "dist/index.js",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "type": "module",
   "bugs": {
     "url": "https://github.com/SUKEsann2000/eternal-timer/issues"

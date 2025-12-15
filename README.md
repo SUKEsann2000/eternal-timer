@@ -4,10 +4,7 @@ A simple and persistent timer library for Node.js. Timers are saved to a file an
 
 ## Features
 
-- **Create Timers**: Create timers for a specified duration
-- **Remove Timers**: Delete timers by ID
-- **Monitor Timers**: Handle expired timers with callback functions
-- **List Timers**: Retrieve all active timers
+- **Monitor Timers (asynchronous)**: Start monitoring expired timers asynchronously; the function returns immediately and the callback is invoked when timers expire.
 - **Persistence**: Save timer data to a file that persists across process restarts
 
 ## Installation
@@ -23,21 +20,23 @@ npm install eternal-timer
 ```typescript
 import { createTimer, checkTimers, removeTimer, showTimers } from 'eternal-timer';
 
-// Create a timer (5 seconds)
-const timerId = await createTimer(5000);
-console.log('Timer created:', timerId);
+async function main() {
+  // Create a timer (5 seconds)
+  const timerId = await createTimer(5000);
+  console.log('Timer created:', timerId);
 
-// Monitor timers (executes when timer expires)
-await checkTimers((timer) => {
-  console.log('Timer expired:', timer.id);
-});
+  // Monitor timers (executes when timer expires)
+  checkTimers((timer) => {
+    console.log('Timer expired:', timer.id);
+  });
 
-// Display all timers
-const timers = await showTimers();
-console.log('Active timers:', timers);
+  // Display all timers
+  const timers = await showTimers();
+  console.log('Active timers:', timers);
 
-// Remove a timer
-await removeTimer(timerId);
+  // Remove a timer
+  await removeTimer(timerId);
+}
 ```
 
 ## API
@@ -62,10 +61,10 @@ Removes a timer by ID.
 
 ### `checkTimers(callback: (timer: Timer) => void, interval?: number): Promise<void>`
 
-Monitors expired timers and executes the callback function.
+Starts monitoring expired timers asynchronously and returns immediately. The callback is invoked asynchronously when a timer expires.
 
 **Parameters:**
-- `callback`: Function to execute when expired timers are found
+- `callback`: Function invoked when an expired timer is detected (called asynchronously)
 - `interval` (number, optional): Check interval in milliseconds (default: 50ms)
 
 ### `showTimers(): Promise<Timer[]>`
@@ -100,7 +99,9 @@ Timer data is stored in the `.timers` file in the project root. Each line follow
 
 ## License
 
-ISC
+Apache-2.0
+
+Licensed under the Apache License, Version 2.0. See the `LICENSE` file for details.
 
 ## Repository
 
