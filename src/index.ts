@@ -17,18 +17,24 @@ async function createFile(): Promise<void> {
     return;
 }
 
-export async function createTimer(length: number): Promise<string | null> {
+export async function createTimer(length: number): Promise<string> {
     try {
         await createFile();
+        
+        if (length < 0) {
+            throw new Error(`Invailed length: ${length}`);
+        }
+
+        length = Math.trunc(length);
 
         // uuid, start, end
-        const id = uuidv4()
-        const newTimerData = `${id} ${Date.now().toString()} ${(Date.now() + length).toString()}`;
-        fs.appendFileSync(timerfiledir, newTimerData +  "\n");
+        const id = uuidv4();
+        const now = Date.now();
+        const newTimerData = `${id} ${now.toString()} ${(now + length).toString()}`;
+        await fs.promises.appendFile(timerfiledir, newTimerData + "\n");
         return id;
     } catch (e) {
-        console.error(`Error when creating timer: ${e}`);
-        return null;
+        throw new Error(`Error when creating timer: ${e}`);
     }
 }
 
@@ -39,12 +45,10 @@ export async function removeTimer(id: string): Promise<boolean> {
 
         const filteredTimers = timersData.filter(line => line.split(" ")[0] !== id);
 
-        fs.writeFileSync(timerfiledir, filteredTimers.join("\n"), "utf-8");
-
+        await fs.promises.writeFile(timerfiledir, filteredTimers.join("\n"), "utf-8");
         return true;
     } catch (e) {
-        console.error(`Error when removing timer: ${e}`);
-        return false;
+        throw new Error(`Error when removing timer: ${e}`);
     }
 }
 
@@ -53,8 +57,10 @@ export async function checkTimers(callback: (timer: Timer) => void, interval: nu
         await createFile();
 
         setInterval(() => {
-            const timersData: string[] = fs.readFileSync(timerfiledir, "utf-8").split(/\r?\n/);
+            const timersDataRaw: string = fs.readFileSync(timerfiledir, "utf-8");
+            const timersData: string[] = timersDataRaw.split(/\r?\n/);
             const timersSet = new Set<Timer>();
+            checkTimerfileSyntax(timersDataRaw);
 
             for (const timerData of timersData) {
                 if (!timerData.trim()) continue;
@@ -98,7 +104,21 @@ export async function showTimers(): Promise<Timer[]> {
         }
         return timersJSON;
     } catch (e) {
-        console.error(`Error when removing timer: ${e}`);
-        return [];
+        throw new Error(`Error when showing timers: ${e}`)
     }
+}
+
+async function checkTimerfileSyntax(fileData: string): Promise<void> {
+    const throwing = () => {
+        throw new Error(`Timer file's syntax is wrong`);
+    };
+    const timersData: string[] = fileData.trim().split('\n');
+    for (const timerData of timersData) {
+        const timerArray: string[] = timerData.split(/\s+/);
+        if (timerArray.length !== 3) throwing();
+        if (timerArray[0]?.length !== 36) throwing();
+        if (timerArray[1]!.trim() === "") throwing();
+        if (timerArray[2]!.trim() === "") throwing();
+    }
+    return;
 }
