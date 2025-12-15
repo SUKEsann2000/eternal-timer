@@ -41,14 +41,16 @@ async function main() {
 
 ## API
 
-### `createTimer(length: number): Promise<string | null>`
+### `createTimer(length: number): Promise<string>`
 
 Creates a new timer.
 
 **Parameters:**
 - `length` (number): Timer duration in milliseconds
 
-**Returns:** Timer ID (UUID), or `null` on error
+**Returns:** Promise that resolves to the timer ID (UUID)
+
+**Throws:** If length is invalid(e.g. length < 0) or file operation fails
 
 ### `removeTimer(id: string): Promise<boolean>`
 
@@ -57,7 +59,7 @@ Removes a timer by ID.
 **Parameters:**
 - `id` (string): ID of the timer to remove
 
-**Returns:** `true` on success, `false` on failure
+**Returns:** void
 
 ### `checkTimers(callback: (timer: Timer) => void, interval?: number): Promise<void>`
 
@@ -67,11 +69,15 @@ Starts monitoring expired timers asynchronously and returns immediately. The cal
 - `callback`: Function invoked when an expired timer is detected (called asynchronously)
 - `interval` (number, optional): Check interval in milliseconds (default: 50ms)
 
+**Throws:** If file operation fails
+
 ### `showTimers(): Promise<Timer[]>`
 
 Retrieves all active timers.
 
 **Returns:** Array of `Timer` objects
+
+**Throws:** If file operation fails
 
 ## Type Definition
 

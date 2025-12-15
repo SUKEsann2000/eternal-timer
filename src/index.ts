@@ -35,7 +35,7 @@ async function createFile(): Promise<void> {
  * @description Creates a new timer.
  * @param length Timer duration in milliseconds
  * @returns Promise that resolves to the timer ID (UUID)
- * @throws If length is invalid or file operation fails
+ * @throws If length is invalid(e.g. length < 0) or file operation fails
  * @example
  * const newTimer = await createTimer(5000);
  * // newTimer will be id of the timer
@@ -94,7 +94,7 @@ export async function removeTimer(id: string): Promise<void> {
  *     console.log(`A timer was stopped: ${timer.id}`);
  * });
  */
-export async function checkTimers(callback: (timer: Timer) => void, interval: number = 50) {
+export async function checkTimers(callback: (timer: Timer) => void, interval: number = 50): Promise<void> {
     try {
         await createFile();
 
@@ -123,7 +123,6 @@ export async function checkTimers(callback: (timer: Timer) => void, interval: nu
             }
 
         }, interval);
-
     } catch (e) {
         throw new Error(`Error when checking alarm: ${e}`);
     }
