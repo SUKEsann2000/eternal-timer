@@ -2,7 +2,12 @@ import fs from "fs";
 import path from "path";
 import searchRoot from "./searchRoot.js";
 import { v4 as uuidv4 } from "uuid";
-import type { Timer } from "types/timersData.ts";
+
+export type Timer = {
+    id: string,
+    start: string,
+    stop: string
+}
 
 // search root folder of project
 const rootdir = searchRoot();
