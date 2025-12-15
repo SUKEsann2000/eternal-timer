@@ -13,6 +13,14 @@ export type Timer = {
 const rootdir = searchRoot();
 const timerfiledir = path.join(rootdir, ".timers");
 
+/**
+ * createFile
+ * @description create `.timers` file
+ * @returns void
+ * @throws If file operation fails
+ * @example
+ * await createFile();
+ */
 async function createFile(): Promise<void> {
     if (!fs.existsSync(timerfiledir)) {
         fs.writeFile(timerfiledir, "", (data) => {
@@ -22,6 +30,16 @@ async function createFile(): Promise<void> {
     return;
 }
 
+/**
+ * createTimer
+ * @description Creates a new timer.
+ * @param length Timer duration in milliseconds
+ * @returns Promise that resolves to the timer ID (UUID)
+ * @throws If length is invalid or file operation fails
+ * @example
+ * const newTimer = await createTimer(5000);
+ * // newTimer will be id of the timer
+ */
 export async function createTimer(length: number): Promise<string> {
     try {
         await createFile();
@@ -43,7 +61,16 @@ export async function createTimer(length: number): Promise<string> {
     }
 }
 
-export async function removeTimer(id: string): Promise<boolean> {
+/**
+ * removeTimer
+ * @description Removes a timer by ID.
+ * @param id ID of the timer to remove
+ * @returns void
+ * @throws If file operation fails
+ * @example
+ * await removeTimer(id);
+ */
+export async function removeTimer(id: string): Promise<void> {
     try {
         const timersRaw: string = fs.readFileSync(timerfiledir, "utf-8");
         const timersData: string[] = timersRaw.split(/\r?\n/);
@@ -51,12 +78,22 @@ export async function removeTimer(id: string): Promise<boolean> {
         const filteredTimers = timersData.filter(line => line.split(" ")[0] !== id);
 
         await fs.promises.writeFile(timerfiledir, filteredTimers.join("\n"), "utf-8");
-        return true;
+        return;
     } catch (e) {
         throw new Error(`Error when removing timer: ${e}`);
     }
 }
 
+/**
+ * @description Starts monitoring expired timers asynchronously and returns immediately. The callback is invoked asynchronously when a timer expires.
+ * @param callback Function invoked when an expired timer is detected (called asynchronously)
+ * @param interval (number, optional): Check interval in milliseconds (default: 50ms)
+ * @throws If file operation fails
+ * @example
+ * checkTimers((timer) => {
+ *     console.log(`A timer was stopped: ${timer.id}`);
+ * });
+ */
 export async function checkTimers(callback: (timer: Timer) => void, interval: number = 50) {
     try {
         await createFile();
@@ -92,6 +129,15 @@ export async function checkTimers(callback: (timer: Timer) => void, interval: nu
     }
 }
 
+/**
+ * showTimers
+ * @description Retrieves all active timers.
+ * @returns Array of `Timer` objects
+ * @throws If file operation fails
+ * @example
+ * const timers = await showTimers();
+ * console.log(JSON.stringify(timers))
+ */
 export async function showTimers(): Promise<Timer[]> {
     try {
         await createFile();
