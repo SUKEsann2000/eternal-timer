@@ -2,8 +2,6 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
     "target": "esnext",
 
     // Node組み込み型を有効化
@@ -18,13 +16,14 @@
     "exactOptionalPropertyTypes": true,
 
     "strict": true,
-    "jsx": "react-jsx",
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
 
-    "baseUrl": "."
+    "baseUrl": ".",
+    "noImplicitAny": true,
+    "noUnusedLocals": true
   }
 }
