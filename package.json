@@ -2,11 +2,9 @@
   "name": "eternal-timer",
   "version": "1.2.3",
   "description": "timer for node.js package",
-  "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node scripts/rename-cjs.js"
   },
   "repository": {
     "type": "git",
@@ -26,9 +24,16 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
-  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs",
+      "types": "./dist/esm/index.d.ts"
+    }
+  },
+  "types": "dist/esm/index.d.ts",
   "dependencies": {
     "uuid": "^13.0.0"
   },
-  "files": [ "dist" ]
+  "files": [ "dist", "src" ]
 }
