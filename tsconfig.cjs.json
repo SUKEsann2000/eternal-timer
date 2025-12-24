@@ -3,6 +3,7 @@
     "compilerOptions": {
         "module": "commonjs",
         "outDir": "dist/cjs",
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+        "verbatimModuleSyntax": false
     }
 }
