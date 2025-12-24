@@ -158,6 +158,34 @@ export async function showTimers(): Promise<Timer[]> {
     }
 }
 
+/**
+ * getRemainingTimer
+ * @description Retrieves the remaining time of a timer by ID.
+ * @param id timer's id you want to get remaining time(ms)
+ * @returns Remaining time of the timer(ms)
+ * @throws If timer with the specified ID is not found or file operation fails
+ * @example
+ * const remaining: number = await getRemainingTimer(id);
+ * console.log(`Remaining time: ${remaining} ms`);
+ */
+export async function getRemainingTimer(id: string): Promise<number> {
+    try {
+        const timersRaw: string = fs.readFileSync(timerfiledir, "utf-8");
+        const timersData: string[] = timersRaw.split(/\r?\n/);
+        for (const timerData of timersData) {
+            const splitedTimerData = timerData.split(" ")
+            if (splitedTimerData[0] === id) {
+                const now = Date.now();
+                const stop = Number(splitedTimerData[2]);
+                return Math.max(0, stop - now);
+            }
+        }
+        throw new Error(`Timer with id ${id} not found`);
+    } catch (e) {
+        throw new Error(`Error when getting remaining timer: ${e}`);
+    }
+}
+
 async function checkTimerfileSyntax(fileData: string): Promise<void> {
     const throwing = () => {
         throw new Error(`Timer file's syntax is wrong`);
