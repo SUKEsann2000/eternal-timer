@@ -74,10 +74,23 @@ export async function removeTimer(id: string): Promise<void> {
     try {
         const timersRaw: string = fs.readFileSync(timerfiledir, "utf-8");
         const timersData: string[] = timersRaw.split(/\r?\n/);
-
-        const filteredTimers = timersData.filter(line => line.split(" ")[0] !== id);
-
-        await fs.promises.writeFile(timerfiledir, filteredTimers.join("\n"), "utf-8");
+        
+        let newTimersData: string = "";
+        let found: boolean = false;
+        for (const timerData of timersData) {
+            if (!timerData.trim()) {
+                found = true;
+                continue;
+            }
+            const [timerId] = timerData.split(" ");
+            if (timerId !== id) {
+                newTimersData += timerData + "\n";
+            }
+        }
+        if (!found) {
+            throw new Error(`Timer with id ${id} not found`);
+        }
+        await fs.promises.writeFile(timerfiledir, newTimersData, "utf-8");
         return;
     } catch (e) {
         throw new Error(`Error when removing timer: ${e}`);
