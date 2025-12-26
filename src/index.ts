@@ -203,7 +203,10 @@ async function checkTimerfileSyntax(fileData: string): Promise<void> {
     const throwing = () => {
         throw new Error(`Timer file's syntax is wrong`);
     };
-    const timersData: string[] = fileData.trim().split('\n');
+    const timersData = fileData
+        .split('\n')
+        .map(l => l.trim())
+        .filter(l => l !== "");
     for (const timerData of timersData) {
         const timerArray: string[] = timerData.split(/\s+/);
         if (timerArray.length !== 3) throwing();
