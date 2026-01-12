@@ -117,6 +117,7 @@ export class TimersManager {
 
     /**
      * @description Starts monitoring expired timers asynchronously and returns immediately. The callback is invoked asynchronously when a timer expires.
+     * The callback is awaited before continuing.
      * @param callback Function invoked when an expired timer is detected (called asynchronously)
      * @param interval (number, optional): Check interval in milliseconds (default: 50ms)
      * @throws If file operation fails
@@ -125,7 +126,7 @@ export class TimersManager {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-    public async checkTimers(callback: (timer: Timer) => void, interval: number = 50): Promise<void> {
+    public async checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 50): Promise<void> {
         try {
             await this.createFile();
 
@@ -149,7 +150,7 @@ export class TimersManager {
                 for (const timer of timersSet) {
                     if (Number(timer.stop) <= now) {
                         await this.removeTimer(timer.id);
-                        callback(timer);
+                        await callback(timer);
                     }
                 }
 
