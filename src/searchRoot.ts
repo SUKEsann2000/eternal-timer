@@ -7,11 +7,11 @@ import path from "path";
  * @returns directly of the project(string)
  */
 export default function searchRoot() {
-    let dir = process.cwd();
-    while (!fs.existsSync(path.join(dir, "package.json"))) {
-        const parent = path.dirname(dir);
-        if (parent === dir) break;
-            dir = parent;
-    }
-    return dir;
+	let dir = process.cwd();
+	while (!fs.existsSync(path.join(dir, "package.json"))) {
+		const parent = path.dirname(dir);
+		if (parent === dir) break;
+		dir = parent;
+	}
+	return dir;
 }
