@@ -35,5 +35,5 @@
   "dependencies": {
     "uuid": "^13.0.0"
   },
-  "files": [ "dist", "src" ]
+  "files": [ "dist" ]
 }
