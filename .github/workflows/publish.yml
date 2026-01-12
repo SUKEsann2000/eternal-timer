@@ -57,4 +57,4 @@ jobs:
           git tag "$NEW_TAG"
           git push origin "$NEW_TAG"
 
-          npm publish --tag "latest" --provenance --access public
+          npm publish --provenance --access public
