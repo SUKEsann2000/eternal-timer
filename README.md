@@ -18,28 +18,39 @@ npm install eternal-timer
 ### Basic Example
 
 ```typescript
-import { createTimer, checkTimers, removeTimer, showTimers } from 'eternal-timer';
+import { TimersManager } from 'eternal-timer';
 
 async function main() {
+  const manager = new TimersManager();
+
   // Create a timer (5 seconds)
-  const timerId = await createTimer(5000);
+  const timerId = await manager.createTimer(5000);
   console.log('Timer created:', timerId);
 
   // Monitor timers (executes when timer expires)
-  checkTimers((timer) => {
+  manager.checkTimers((timer) => {
     console.log('Timer expired:', timer.id);
   });
 
   // Display all timers
-  const timers = await showTimers();
+  const timers = await manager.showTimers();
   console.log('Active timers:', timers);
 
   // Remove a timer
-  await removeTimer(timerId);
+  await manager.removeTimer(timerId);
 }
+
+main();
 ```
 
 ## API
+
+### `new TimersManager(timerfiledir?: string)`
+
+Creates a new `TimersManager` instance.
+
+**Parameters:**
+- `timerfiledir` (string, optional): The path to the directory where the timer file is stored. If omitted, `.timers` under the project root is used.
 
 ### `createTimer(length: number): Promise<string>`
 
@@ -52,7 +63,7 @@ Creates a new timer.
 
 **Throws:** If length is invalid(e.g. length < 0) or file operation fails
 
-### `removeTimer(id: string): Promise<boolean>`
+### `removeTimer(id: string): Promise<void>`
 
 Removes a timer by ID.
 
@@ -61,9 +72,14 @@ Removes a timer by ID.
 
 **Returns:** void
 
-### `checkTimers(callback: (timer: Timer) => void, interval?: number): Promise<void>`
+**Throws:** If the timer with the specified ID is not found or if a file operation fails.
 
-Starts monitoring expired timers asynchronously and returns immediately. The callback is invoked asynchronously when a timer expires.
+### `checkTimers(callback: (timer: Timer) => Promise<void>, interval?: number): Promise<void>`
+
+Starts monitoring expired timers and returns immediately.
+
+The callback is invoked when a timer expires during periodic checks.
+The callback is awaited before the next timer check continues.
 
 **Parameters:**
 - `callback`: Function invoked when an expired timer is detected (called asynchronously)
@@ -84,8 +100,8 @@ Retrieves all active timers.
 ```typescript
 type Timer = {
     id: string;      // Unique timer identifier (UUID)
-    start: string;   // Timer start timestamp
-    stop: string;    // Timer end timestamp
+    start: number;   // Timer start timestamp
+    stop: number;    // Timer end timestamp
 }
 ```
 
