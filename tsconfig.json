@@ -1,10 +1,18 @@
 {
+  "exclude": ["src/**/*", "eslint/**/*"],
+  "references": [
+    {
+      "path": "tsconfig.esm.json"
+    },
+    {
+      "path": "tsconfig.cjs.json"
+    }
+  ],
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
     "target": "esnext",
 
-    // Node組み込み型を有効化
     "types": ["node"],
 
     "esModuleInterop": true,
@@ -24,6 +32,6 @@
 
     "baseUrl": ".",
     "noImplicitAny": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
   }
 }
