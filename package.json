@@ -6,7 +6,7 @@
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
     "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node scripts/rename-cjs.js",
     "start": "npm run build && node dist/esm/index.js",
-    "lint": "npx eslint src/**/*.{ts,js} --fix --config ./eslint/eslint.config.ts"
+    "lint": "npx eslint --fix --config ./eslint/eslint.config.ts"
   },
   "repository": {
     "type": "git",
