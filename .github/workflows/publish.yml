@@ -16,7 +16,7 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build --if-present
+        run: npm run build
 
       - name: Run test script
         run: |
@@ -38,7 +38,7 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build --if-present
+        run: npm run build
 
       - name: Create linted tag & publish
         run: |
