@@ -17,7 +17,7 @@ npm install eternal-timer
 
 ### Basic Example
 
-```typescript
+```javascript
 import { TimersManager } from 'eternal-timer';
 
 async function main() {
