@@ -21,23 +21,23 @@ npm install eternal-timer
 import { TimersManager } from 'eternal-timer';
 
 async function main() {
-  const manager = new TimersManager();
+    const manager = new TimersManager();
 
-  // Create a timer (5 seconds)
-  const timerId = await manager.createTimer(5000);
-  console.log('Timer created:', timerId);
+    // Create a timer (5 seconds)
+    const timerId = await manager.createTimer(5000);
+    console.log('Timer created:', timerId);
 
-  // Monitor timers (executes when timer expires)
-  manager.checkTimers((timer) => {
-    console.log('Timer expired:', timer.id);
-  });
+    // Monitor timers (executes when timer expires)
+    manager.checkTimers(async (timer) => {
+        console.log('Timer expired:', timer.id);
+    });
 
-  // Display all timers
-  const timers = await manager.showTimers();
-  console.log('Active timers:', timers);
+    // Display all timers
+    const timers = await manager.showTimers();
+    console.log('Active timers:', timers);
 
-  // Remove a timer
-  await manager.removeTimer(timerId);
+    // Remove a timer
+    await manager.removeTimer(timerId);
 }
 
 main();
