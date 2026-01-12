@@ -7,6 +7,6 @@
         "outDir": "dist/cjs",
         "moduleResolution": "node",
         "verbatimModuleSyntax": false,
-        "composite": true
+        "incremental": false
     }
 }

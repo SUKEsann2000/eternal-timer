@@ -1,13 +1,5 @@
 {
   "exclude": ["src/**/*", "eslint/**/*"],
-  "references": [
-    {
-      "path": "tsconfig.esm.json"
-    },
-    {
-      "path": "tsconfig.cjs.json"
-    }
-  ],
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
