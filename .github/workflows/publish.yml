@@ -6,8 +6,23 @@ on:
       - 'v*'
 
 jobs:
+  test:
+    runs-on: ubuntu-slim
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run test script
+        run: |
+          npm run test
+
   publish:
     runs-on: ubuntu-slim
+
+    needs: test
 
     permissions:
       contents: write
@@ -18,11 +33,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Lint
-        run: |
-          npm run lint
-          echo "Lint passed ✅"
 
       - name: Build
         run: npm run build --if-present
