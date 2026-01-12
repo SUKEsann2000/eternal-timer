@@ -4,7 +4,7 @@ A simple and persistent timer library for Node.js. Timers are saved to a file an
 
 ## Features
 
-- **Monitor Timers (asynchronous)**: Start monitoring expired timers asynchronously; the function returns immediately and the callback is invoked when timers expire.
+- **Monitor Timers (asynchronous)**: Start monitoring expired timers asynchronously; the function returns immediately and the callback is called when timers expire.
 - **Persistence**: Save timer data to a file that persists across process restarts
 
 ## Installation
@@ -82,7 +82,7 @@ The callback is invoked when a timer expires during periodic checks.
 The callback is awaited before the next timer check continues.
 
 **Parameters:**
-- `callback`: Function invoked when an expired timer is detected (called asynchronously)
+- `callback`: Function invoked when an expired timer is detected (called during periodic checks and awaited)
 - `interval` (number, optional): Check interval in milliseconds (default: 50ms)
 
 **Throws:** If file operation fails
