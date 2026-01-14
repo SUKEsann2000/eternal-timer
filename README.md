@@ -110,6 +110,8 @@ type Timer = {
 - `npm run dev`: Run in development mode with nodemon
 - `npm run build`: Compile TypeScript
 - `npm start`: Run compiled JavaScript
+- `npm run test`: Test the compiled code
+- `npm run lint`: Lint all codes
 
 ## Storage
 
@@ -128,3 +130,5 @@ Licensed under the Apache License, Version 2.0. See the `LICENSE` file for detai
 ## Repository
 
 https://github.com/SUKEsann2000/eternal-timer
+
+
