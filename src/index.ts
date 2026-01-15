@@ -31,19 +31,11 @@ export class TimersManager {
 	) {
 		this.timerfiledir =
             timerfiledir ?? path.join(searchRoot(), ".timers");
-	}
-
-	/**
-     * createFile
-     * @description create `.timers` file
-     * @returns void
-     * @throws If file operation fails
-     */
-	private async createFile(): Promise<void> {
+		
 		try {
-			await fs.promises.access(this.timerfiledir);
+			fs.accessSync(this.timerfiledir);
 		} catch {
-			await fs.promises.writeFile(this.timerfiledir, "");
+			fs.writeFileSync(this.timerfiledir, "");
 		}
 	}
 
@@ -60,8 +52,6 @@ export class TimersManager {
      */
 	public async createTimer(length: number): Promise<string> {
 		try {
-			await this.createFile();
-            
 			if (length < 0) {
 				throw new Error(`Invailed length: ${length}`);
 			}
@@ -129,8 +119,6 @@ export class TimersManager {
      */
 	public async checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 50): Promise<NodeJS.Timeout> {
 		try {
-			await this.createFile();
-
 			return setInterval(async () => {
 				const timersDataRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 				const timersData: string[] = timersDataRaw.split(/\r?\n/);
@@ -172,7 +160,6 @@ export class TimersManager {
      */
 	public async showTimers(): Promise<Timer[]> {
 		try {
-			await this.createFile();
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			const timersData: string[] = timersRaw.split(/\r?\n/);
 
