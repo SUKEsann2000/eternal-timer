@@ -9,6 +9,7 @@ A simple and persistent timer library for Node.js. Timers are saved to a file an
 
 - **Monitor Timers (asynchronous)**: Start monitoring expired timers asynchronously; the function returns immediately and the callback is called when timers expire.
 - **Persistence**: Save timer data to a file that persists across process restarts
+- **JSON Lines Support**: Use the `.jsonl` extension for your timer file to store richer data, including titles and descriptions.
 
 ## Installation
 
@@ -24,15 +25,17 @@ npm install eternal-timer
 import { TimersManager } from 'eternal-timer';
 
 async function main() {
+    // By default, timers are stored in '.timers.jsonl' in the project root.
+    // Using a .jsonl file enables storing title and description.
     const manager = new TimersManager();
 
-    // Create a timer (5 seconds)
-    const timerId = await manager.createTimer(5000);
+    // Create a timer (5 seconds) with a title and description
+    const timerId = await manager.createTimer(5000, 'My Timer', 'This is a test timer.');
     console.log('Timer created:', timerId);
 
     // Monitor timers (executes when timer expires)
     const interval = manager.checkTimers(async (timer) => {
-        console.log('Timer expired:', timer.id);
+        console.log('Timer expired:', timer.id, timer.title);
     });
 
     // Display all timers
@@ -53,14 +56,16 @@ main();
 Creates a new `TimersManager` instance.
 
 **Parameters:**
-- `timerfiledir` (string, optional): The path to the directory where the timer file is stored. If omitted, `.timers.jsonl` under the project root is used.
+- `timerfiledir` (string, optional): The path to the directory where the timer file is stored. If the file extension is `.jsonl`, the timers will be stored in JSON Lines format. If omitted, `.timers.jsonl` under the project root is used.
 
-### `createTimer(length: number): Promise<string>`
+### `createTimer(length: number, title?: string, description?: string): Promise<string>`
 
 Creates a new timer.
 
 **Parameters:**
 - `length` (number): Timer duration in milliseconds
+- `title` (string, optional): A title for the timer. Only stored if using a `.jsonl` file.
+- `description` (string, optional): A description for the timer. Only stored if using a `.jsonl` file.
 
 **Returns:** Promise that resolves to the timer ID (UUID)
 
@@ -107,6 +112,8 @@ type Timer = {
     id: string;      // Unique timer identifier (UUID)
     start: number;   // Timer start timestamp
     stop: number;    // Timer end timestamp
+    title?: string;
+    description?: string;
 }
 ```
 
@@ -120,8 +127,14 @@ type Timer = {
 
 ## Storage
 
-Timer data is stored in the `.timers` file in the project root. Each line follows this format:
+Timer data is stored in the file specified in the constructor (default: `.timers.jsonl`).
 
+If the file has a `.jsonl` extension, each line is a JSON object representing a timer:
+```json
+{"id":"...","start":1678886400000,"stop":1678886405000,"title":"My Timer","description":"..."}
+```
+
+Otherwise, it uses a plain text format with space-separated values: (if you don't use `.jsonl` file)
 ```
 {id} {start_timestamp} {stop_timestamp}
 ```
