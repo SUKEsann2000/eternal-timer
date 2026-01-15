@@ -123,7 +123,7 @@ export class TimersManager {
      * @throws If file operation fails
 	 * @returns (number) intervalId interval id of checkTimers
      * @example
-     * manager.checkTimers((timer) => {
+     * const intervalId = manager.checkTimers((timer) => {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
