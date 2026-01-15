@@ -31,7 +31,7 @@ async function main() {
     console.log('Timer created:', timerId);
 
     // Monitor timers (executes when timer expires)
-    const intervalId = manager.checkTimers(async (timer) => {
+    const interval = manager.checkTimers(async (timer) => {
         console.log('Timer expired:', timer.id);
     });
 
