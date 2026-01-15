@@ -9,6 +9,24 @@ export type Timer = {
     stop: number
 }
 
+async function checkTimerfileSyntax(fileData: string): Promise<void> {
+	const throwing = () => {
+		throw new Error(`Timer file's syntax is wrong`);
+	};
+	const timersData = fileData
+		.split('\n')
+		.map(l => l.trim())
+		.filter(l => l !== "");
+	for (const timerData of timersData) {
+		const timerArray: string[] = timerData.split(/\s+/);
+		if (timerArray.length !== 3) throwing();
+		if (timerArray[0]?.length !== 36) throwing();
+		if (timerArray[1]!.trim() === "") throwing();
+		if (timerArray[2]!.trim() === "") throwing();
+	}
+	return;
+}
+
 /**
  * TimersManager
  * @description
@@ -123,7 +141,7 @@ export class TimersManager {
 				const timersDataRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 				const timersData: string[] = timersDataRaw.split(/\r?\n/);
 				const timersSet = new Set<Timer>();
-				await this.checkTimerfileSyntax(timersDataRaw);
+				await checkTimerfileSyntax(timersDataRaw);
 
 				for (const timerData of timersData) {
 					if (!timerData.trim()) continue;
@@ -177,23 +195,5 @@ export class TimersManager {
 		} catch (e) {
 			throw new Error(`Error when showing timers: ${e}`);
 		}
-	}
-
-	private async checkTimerfileSyntax(fileData: string): Promise<void> {
-		const throwing = () => {
-			throw new Error(`Timer file's syntax is wrong`);
-		};
-		const timersData = fileData
-			.split('\n')
-			.map(l => l.trim())
-			.filter(l => l !== "");
-		for (const timerData of timersData) {
-			const timerArray: string[] = timerData.split(/\s+/);
-			if (timerArray.length !== 3) throwing();
-			if (timerArray[0]?.length !== 36) throwing();
-			if (timerArray[1]!.trim() === "") throwing();
-			if (timerArray[2]!.trim() === "") throwing();
-		}
-		return;
 	}
 }
