@@ -121,16 +121,17 @@ export class TimersManager {
      * @param callback Function invoked when an expired timer is detected (called asynchronously)
      * @param interval (number, optional): Check interval in milliseconds (default: 50ms)
      * @throws If file operation fails
+	 * @returns (number) intervalId interval id of checkTimers
      * @example
      * manager.checkTimers((timer) => {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-	public async checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 50): Promise<void> {
+	public async checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 50): Promise<number> {
 		try {
 			await this.createFile();
 
-			setInterval(async () => {
+			return setInterval(async () => {
 				const timersDataRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 				const timersData: string[] = timersDataRaw.split(/\r?\n/);
 				const timersSet = new Set<Timer>();
