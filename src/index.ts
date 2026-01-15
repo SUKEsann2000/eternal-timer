@@ -90,7 +90,7 @@ export class TimersManager {
      */
 	public async removeTimer(id: string): Promise<void> {
 		try {
-			const timersRaw: string = fs.readFileSync(this.timerfiledir, "utf-8");
+			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			const timersData: string[] = timersRaw.split(/\r?\n/);
             
 			let newTimersData: string = "";
@@ -173,7 +173,7 @@ export class TimersManager {
 	public async showTimers(): Promise<Timer[]> {
 		try {
 			await this.createFile();
-			const timersRaw: string = fs.readFileSync(this.timerfiledir, "utf-8");
+			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			const timersData: string[] = timersRaw.split(/\r?\n/);
 
 			const timersJSON: Timer[] = [];
