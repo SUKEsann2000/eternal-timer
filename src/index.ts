@@ -6,7 +6,9 @@ import { v4 as uuidv4 } from "uuid";
 export type Timer = {
     id: string,
     start: number,
-    stop: number
+    stop: number,
+	title: string,
+	description: string
 }
 
 async function checkTimerfileSyntax(fileData: string): Promise<void> {
@@ -38,18 +40,21 @@ async function checkTimerfileSyntax(fileData: string): Promise<void> {
  */
 export class TimersManager {
 	private readonly timerfiledir: string;
+	private readonly isJSONLines: boolean;
 
 	/**
      * constructor
      * @param timerfiledir(string, optional)
-     * If omitted, `.timers` under the project root is used.
+     * If omitted, `.timers.jsonl` under the project root is used.
      */
 	constructor(
 		timerfiledir?: string,
 	) {
 		this.timerfiledir =
-            timerfiledir ?? path.join(searchRoot(), ".timers");
+            timerfiledir ?? path.join(searchRoot(), ".timers.jsonl");
 		
+		this.isJSONLines = this.timerfiledir.endsWith(".jsonl");
+
 		try {
 			fs.accessSync(this.timerfiledir);
 		} catch {

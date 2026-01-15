@@ -53,7 +53,7 @@ main();
 Creates a new `TimersManager` instance.
 
 **Parameters:**
-- `timerfiledir` (string, optional): The path to the directory where the timer file is stored. If omitted, `.timers` under the project root is used.
+- `timerfiledir` (string, optional): The path to the directory where the timer file is stored. If omitted, `.timers.jsonl` under the project root is used.
 
 ### `createTimer(length: number): Promise<string>`
 
