@@ -77,7 +77,7 @@ Removes a timer by ID.
 
 **Throws:** If the timer with the specified ID is not found or if a file operation fails.
 
-### `checkTimers(callback: (timer: Timer) => Promise<void>, interval?: number): Promise<number>`
+### `checkTimers(callback: (timer: Timer) => Promise<void>, interval?: number): Promise<NodeJS.Timeout>`
 
 Starts monitoring expired timers and returns immediately.
 

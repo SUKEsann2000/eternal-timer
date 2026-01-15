@@ -121,13 +121,13 @@ export class TimersManager {
      * @param callback Function invoked when an expired timer is detected (called asynchronously)
      * @param interval (number, optional): Check interval in milliseconds (default: 50ms)
      * @throws If file operation fails
-	 * @returns (number) intervalId interval id of checkTimers
+	 * @returns (NodeJS.Timeout) intervalId interval id of checkTimers
      * @example
-     * const intervalId = manager.checkTimers((timer) => {
+     * const interval = manager.checkTimers((timer) => {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-	public async checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 50): Promise<number> {
+	public async checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 50): Promise<NodeJS.Timeout> {
 		try {
 			await this.createFile();
 
