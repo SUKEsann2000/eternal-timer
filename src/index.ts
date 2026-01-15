@@ -52,6 +52,7 @@ async function checkTimerfileSyntax(fileData: string, isJSONLines: boolean): Pro
 export class TimersManager {
 	private readonly timerfiledir: string;
 	private readonly isJSONLines: boolean;
+	private checkLock: boolean = false;
 
 	/**
      * constructor
@@ -94,6 +95,9 @@ export class TimersManager {
 					// out warn
 				}
 			}
+			
+			const timersRaw = await fs.promises.readFile(this.timerfiledir, "utf-8")
+			await checkTimerfileSyntax(timersRaw, this.isJSONLines);
 
 			length = Math.trunc(length);
 
@@ -106,8 +110,8 @@ export class TimersManager {
 					id,
 					start: now,
 					stop: (now + length),
-					title,
-					description,
+					...(title !== undefined && { title }),
+					...(description !== undefined && { description }),
 				};
 				newTimerData = JSON.stringify(json, null, 0);
 			} else {
@@ -132,6 +136,7 @@ export class TimersManager {
 	public async removeTimer(id: string): Promise<void> {
 		try {
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
+			await checkTimerfileSyntax(timersRaw, this.isJSONLines);
 			
 			let newTimersData: string = "";
 			if (this.isJSONLines) {
@@ -190,24 +195,26 @@ export class TimersManager {
      * });
      */
 	public async checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 50): Promise<NodeJS.Timeout> {
-		try {
-			return setInterval(async () => {
+		return setInterval(async () => {
+			if (this.checkLock) return;
+			this.checkLock = true;
+
+			try {
 				const timersDataRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 				const timersSet = new Set<Timer>();
-				await checkTimerfileSyntax(timersDataRaw, this.isJSONLines);
 
 				if (this.isJSONLines) {
 					const timersData: Timer[] = timersDataRaw
-					  .split(/\r?\n/)
-					  .filter(line => line.trim())
-					  .map(line => JSON.parse(line) as Timer);
-				  
+						.split(/\r?\n/)
+						.filter(line => line.trim())
+						.map(line => JSON.parse(line) as Timer);
+
 					for (const timer of timersData) {
-					  timersSet.add(timer);
+						timersSet.add(timer);
 					}
 				} else {
 					const timersData: string[] = timersDataRaw.split(/\r?\n/);
-					
+
 					for (const timerData of timersData) {
 						if (!timerData.trim()) continue;
 						const [id, startStr, stopStr] = timerData.split(" ");
@@ -218,7 +225,6 @@ export class TimersManager {
 						});
 					}
 				}
-				  
 
 				const now = Date.now();
 				for (const timer of timersSet) {
@@ -227,11 +233,12 @@ export class TimersManager {
 						await callback(timer);
 					}
 				}
-
-			}, interval);
-		} catch (e) {
-			throw new Error(`Error when checking alarm: ${e}`);
-		}
+			} catch (e) {
+				throw new Error(`Error when checking alarm: ${e}`);
+			} finally {
+				this.checkLock = false;
+			}
+		}, interval);
 	}
 
 	/**
