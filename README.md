@@ -1,5 +1,8 @@
 # eternal-timer
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/SUKEsann2000/eternal-timer/publish.yml)
+![NPM Downloads](https://img.shields.io/npm/dm/eternal-timer)
+
 A simple and persistent timer library for Node.js. Timers are saved to a file and maintain their state even after process restart.
 
 ## Features
