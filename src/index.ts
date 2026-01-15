@@ -6,7 +6,9 @@ import { v4 as uuidv4 } from "uuid";
 export type Timer = {
     id: string,
     start: number,
-    stop: number
+    stop: number,
+	title?: string,
+	description?: string
 }
 
 /**
@@ -20,6 +22,7 @@ export type Timer = {
  */
 export class TimersManager {
 	private readonly timerfiledir: string;
+	private readonly isJsonLines: boolean;
 
 	/**
      * constructor
@@ -27,10 +30,11 @@ export class TimersManager {
      * If omitted, `.timers` under the project root is used.
      */
 	constructor(
-		timerfiledir?: string,
+		timerfiledir?: string
 	) {
 		this.timerfiledir =
-            timerfiledir ?? path.join(searchRoot(), ".timers");
+            timerfiledir ?? path.join(searchRoot(), ".timers.jsonl");
+		this.isJsonLines = timerfiledir.endsWith(".jsonl");
 	}
 
 	/**
