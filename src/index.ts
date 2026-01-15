@@ -76,7 +76,16 @@ export class TimersManager {
 			const id = uuidv4();
 			const now = Date.now();
 			const newTimerData = `${id} ${now.toString()} ${(now + length).toString()}`;
-			await fs.promises.appendFile(this.timerfiledir, newTimerData + "\n");
+			if (!this.isJsonLines) {
+				await fs.promises.appendFile(this.timerfiledir, newTimerData + "\n");
+			} else {
+				const json = {
+					id,
+					now,
+					newTimerData
+				}
+				await fs.promises.appendFile(JSON.stringify(json, null, 0));
+			}
 			return id;
 		} catch (e) {
 			throw new Error(`Error when creating timer: ${e}`);
