@@ -1,7 +1,7 @@
 const { TimersManager } = require("eternal-timer");
 
 async function cjs_test() {
-	const manager = new TimersManager("test/.timers");
+	const manager = new TimersManager("test/.timers.jsonl");
 
 	console.log("=== COMMONJS_TEST ===");
 
@@ -21,10 +21,11 @@ async function cjs_test() {
 	}
 
 	const finishedTimers = [];
-	manager.checkTimers(async (timer) => {
+	const interval = manager.checkTimers(async (timer) => {
 		finishedTimers.push(timer.id);
 	});
 	await new Promise(resolve => setTimeout(resolve, 2000));
+	clearInterval(interval);
 
 	if (finishedTimers.includes(timer1) && finishedTimers.includes(timer2)) {
 		console.log("✅ Callback of Timer OK");
