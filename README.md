@@ -56,7 +56,10 @@ main();
 Creates a new `TimersManager` instance.
 
 **Parameters:**
-- `timerfiledir` (string, optional): The path to the directory where the timer file is stored. If the file extension is `.jsonl`, the timers will be stored in JSON Lines format. If omitted, `.timers.jsonl` under the project root is used.
+- `timerfiledir` (string, optional): The path to the timer file. The file extension determines the storage format.
+    - **`.jsonl` extension**: Timers are stored in the feature-rich **JSON Lines** format.
+    - **Other extensions (or no extension)**: Timers are stored in the lightweight **plain-text** format.
+    - If omitted, the default is `.timers.jsonl` in the project root.
 
 ### `createTimer(length: number, title?: string, description?: string): Promise<string>`
 
@@ -127,17 +130,27 @@ type Timer = {
 
 ## Storage
 
-Timer data is stored in the file specified in the constructor (default: `.timers.jsonl`).
+You can choose between two storage formats based on the file extension you provide to the `TimersManager` constructor.
 
-If the file has a `.jsonl` extension, each line is a JSON object representing a timer:
-```json
-{"id":"...","start":1678886400000,"stop":1678886405000,"title":"My Timer","description":"..."}
-```
+### 1. JSON Lines (`.jsonl`) - Default
+This is the default format, used when the timer file has a `.jsonl` extension.
 
-Otherwise, it uses a plain text format with space-separated values: (if you don't use `.jsonl` file)
-```
-{id} {start_timestamp} {stop_timestamp}
-```
+- **Pros**: Allows for storing rich metadata like `title` and `description`.
+- **Cons**: Involves JSON parsing, which may have a minor performance overhead.
+- **Format**:
+  ```json
+  {"id":"...","start":1678886400000,"stop":1678886405000,"title":"My Timer","description":"..."}
+  ```
+
+### 2. Plain Text
+This format is used for any file that does not have a `.jsonl` extension (e.g., `.timers`).
+
+- **Pros**: More lightweight and slightly faster due to avoiding JSON parsing.
+- **Cons**: Cannot store additional data like `title` or `description`.
+- **Format**:
+  ```
+  {id} {start_timestamp} {stop_timestamp}
+  ```
 
 ## License
 
