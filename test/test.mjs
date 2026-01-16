@@ -27,7 +27,9 @@ export async function module_test() {
 	await new Promise(resolve => setTimeout(resolve, 2000));
 	clearInterval(interval);
 
-	if (finishedTimers.includes(timer1) && finishedTimers.includes(timer2)) {
+	//console.log(finishedTimers);
+
+	if (finishedTimers.includes(timer1) && finishedTimers.includes(timer2) && finishedTimers.length === 2) {
 		console.log("✅ Callback of Timer OK");
 	} else {
 		console.log("❌ Callback of Timer Failed");
@@ -40,7 +42,7 @@ export async function module_test() {
 	await manager.removeTimer(timer3);
 	const timersAfterRemove = await manager.showTimers();
 
-	if (!timersAfterRemove.some(t => t.id === timer3)) {
+	if (timersAfterRemove.length === 0) {
 		console.log("✅ Remove Timer OK");
 	} else {
 		console.log("❌ Delete Timer failed");
