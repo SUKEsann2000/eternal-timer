@@ -96,7 +96,7 @@ export class TimersManager {
 				}
 			}
 			
-			const timersRaw = await fs.promises.readFile(this.timerfiledir, "utf-8")
+			const timersRaw = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			await checkTimerfileSyntax(timersRaw, this.isJSONLines);
 
 			length = Math.trunc(length);
@@ -219,9 +219,9 @@ export class TimersManager {
 						if (!timerData.trim()) continue;
 						const [id, startStr, stopStr] = timerData.split(" ");
 						timersSet.add({
-						id: id!,
-						start: Number(startStr!),
-						stop: Number(stopStr!),
+							id: id!,
+							start: Number(startStr!),
+							stop: Number(stopStr!),
 						});
 					}
 				}
