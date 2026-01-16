@@ -25,5 +25,7 @@
     "baseUrl": ".",
     "noImplicitAny": true,
     "noUnusedLocals": true,
+
+    "tsBuildInfoFile": "./.cache/ts/.tsbuildinfo"
   }
 }
