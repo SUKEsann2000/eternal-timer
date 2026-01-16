@@ -201,7 +201,7 @@ export class TimersManager {
 
 			try {
 				const timersDataRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
-				const timersSet = new Set<Timer>();
+				const timersMap = new Map<string, Timer>();
 
 				if (this.isJSONLines) {
 					const timersData: Timer[] = timersDataRaw
@@ -210,7 +210,7 @@ export class TimersManager {
 						.map(line => JSON.parse(line) as Timer);
 
 					for (const timer of timersData) {
-						timersSet.add(timer);
+						timersMap.set(timer.id, timer);
 					}
 				} else {
 					const timersData: string[] = timersDataRaw.split(/\r?\n/);
@@ -218,7 +218,7 @@ export class TimersManager {
 					for (const timerData of timersData) {
 						if (!timerData.trim()) continue;
 						const [id, startStr, stopStr] = timerData.split(" ");
-						timersSet.add({
+						timersMap.set(id ,{
 							id: id!,
 							start: Number(startStr!),
 							stop: Number(stopStr!),
@@ -227,7 +227,7 @@ export class TimersManager {
 				}
 
 				const now = Date.now();
-				for (const timer of timersSet) {
+				for (const timer of timersMap.values()) {
 					if (Number(timer.stop) <= now) {
 						await this.removeTimer(timer.id);
 						await callback(timer);
