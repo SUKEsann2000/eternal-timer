@@ -218,7 +218,7 @@ export class TimersManager {
 					for (const timerData of timersData) {
 						if (!timerData.trim()) continue;
 						const [id, startStr, stopStr] = timerData.split(" ");
-						timersMap.set(id ,{
+						timersMap.set(id! ,{
 							id: id!,
 							start: Number(startStr!),
 							stop: Number(stopStr!),
