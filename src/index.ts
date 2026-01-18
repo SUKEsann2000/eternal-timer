@@ -7,12 +7,12 @@ import type { Logger } from "@logtape/logtape";
 let logtapeLib: typeof import("@logtape/logtape") | null = null;
 let logger: Logger | null = null;
 try {
-  logtapeLib = await import("@logtape/logtape");
-  logger = logtapeLib.getLogger(["eternal-timer"])
+	logtapeLib = await import("@logtape/logtape");
+	logger = logtapeLib.getLogger(["eternal-timer"]);
 } catch {
-  console.log(
-	  "Tip: Install the optional package '@logtape/logtape' to customize logging behavior."
-);
+	console.log(
+	  "Tip: Install the optional package '@logtape/logtape' to customize logging behavior.",
+	);
 }
 
 export type Timer = {
@@ -106,8 +106,8 @@ export class TimersManager {
 				if (title || description) {
 					if (logger) {
 						logger.warn(
-	"`title` and `description` are ignored because JSON Lines format is disabled",
-);
+							"`title` and `description` are ignored because JSON Lines format is disabled",
+						);
 					}
 				}
 			}
