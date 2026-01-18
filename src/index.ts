@@ -17,7 +17,7 @@ async function ensureLogger() {
 			} catch {
 				console.info(
 	  "Tip: Install the optional package '@logtape/logtape' to customize logging behavior.",
-	);
+				);
 			}
 		})();
 	}
