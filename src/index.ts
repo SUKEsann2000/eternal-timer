@@ -4,15 +4,24 @@ import searchRoot from "./searchRoot.js";
 import { v4 as uuidv4 } from "uuid";
 import type { Logger } from "@logtape/logtape";
 
-let logtapeLib: typeof import("@logtape/logtape") | null = null;
 let logger: Logger | null = null;
-try {
-	logtapeLib = await import("@logtape/logtape");
-	logger = logtapeLib.getLogger(["eternal-timer"]);
-} catch {
-	console.log(
+let initPromise: Promise<void> | null = null;
+
+async function ensureLogger() {
+	if (logger) return;
+	if (!initPromise) {
+		initPromise = (async () => {
+			try {
+				const logtape = await import("@logtape/logtape");
+				logger = logtape.getLogger(["eternal-timer"]);
+			} catch {
+				console.info(
 	  "Tip: Install the optional package '@logtape/logtape' to customize logging behavior.",
 	);
+			}
+		})();
+	}
+	await initPromise;
 }
 
 export type Timer = {
@@ -104,6 +113,7 @@ export class TimersManager {
 			}
 			if (!this.isJSONLines) {
 				if (title || description) {
+					await ensureLogger();
 					if (logger) {
 						logger.warn(
 							"`title` and `description` are ignored because JSON Lines format is disabled",
@@ -250,6 +260,7 @@ export class TimersManager {
 					}
 				}
 			} catch (e) {
+				await ensureLogger();
 				if (logger) {
 					logger.error(`Error when checking alarm: ${e}`);
 				}
