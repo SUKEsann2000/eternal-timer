@@ -16,7 +16,7 @@ async function ensureLogger() {
 				logger = logtape.getLogger(["eternal-timer"]);
 			} catch {
 				console.info(
-	  "Tip: Install the optional package '@logtape/logtape' to customize logging behavior.",
+	  				"Tip: Install the optional package '@logtape/logtape' to customize logging behavior.",
 				);
 			}
 		})();
