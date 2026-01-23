@@ -142,7 +142,9 @@ export class PlainTextTimersManager extends TimersManager {
 				const now = Date.now();
 				for (const timer of timersMap.values()) {
 					if (Number(timer.stop) <= now) {
-						await this.removeTimer(timer.id);
+						await this.removeTimer(timer.id).finally(() => {
+							this.checkLock = false;
+						});
 						await callback(timer);
 					}
 				}
@@ -151,8 +153,6 @@ export class PlainTextTimersManager extends TimersManager {
 				if (Log.loggerInstance) {
 					Log.loggerInstance.error(`Error when checking alarm: ${e}`);
 				}
-			} finally {
-				this.checkLock = false;
 			}
 		}, interval);
 	}
