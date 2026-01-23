@@ -134,7 +134,7 @@ export class JSONLTimersManager extends TimersManager {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-	public checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 50): NodeJS.Timeout {
+	public checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 200): NodeJS.Timeout {
 		return setInterval(async () => {
 			if (this.checkLock) return;
 			this.checkLock = true;
