@@ -9,7 +9,7 @@ A simple and persistent timer library for Node.js. Timers are saved to a file an
 
 - **Monitor Timers (asynchronous)**: Start monitoring expired timers asynchronously; the function returns immediately and the callback is called when timers expire.
 - **Persistence**: Save timer data to a file that persists across process restarts
-- **JSON Lines Support**: Use the `.jsonl` extension for your timer file to store richer data, including titles and descriptions.
+- **Choice of Format**: Choose between JSON Lines for rich data or plain text for lightweight storage.
 
 ## Installation
 
@@ -19,15 +19,18 @@ npm install eternal-timer
 
 ## Usage
 
-### Basic Example
+You can choose between two manager classes depending on the desired storage format.
+
+### `JSONLTimersManager` (JSON Lines)
+
+Use this manager to store timers in a `.jsonl` file, which allows for storing `title` and `description`.
 
 ```javascript
-import { TimersManager } from 'eternal-timer';
+import { JSONLTimersManager } from 'eternal-timer';
 
 async function main() {
     // By default, timers are stored in '.timers.jsonl' in the project root.
-    // Using a .jsonl file enables storing title and description.
-    const manager = new TimersManager();
+    const manager = new JSONLTimersManager();
 
     // Create a timer (5 seconds) with a title and description
     const timerId = await manager.createTimer(5000, 'My Timer', 'This is a test timer.');
@@ -49,17 +52,47 @@ async function main() {
 main();
 ```
 
+### `PlainTextTimersManager` (Plain Text)
+
+Use this manager for a more lightweight plain-text format.
+
+```javascript
+import { PlainTextTimersManager } from 'eternal-timer';
+
+async function main() {
+    // By default, timers are stored in '.timers' in the project root.
+    const manager = new PlainTextTimersManager();
+
+    // Create a timer (5 seconds)
+    const timerId = await manager.createTimer(5000);
+    console.log('Timer created:', timerId);
+
+    // Monitor timers
+    const interval = manager.checkTimers(async (timer) => {
+        console.log('Timer expired:', timer.id);
+    });
+}
+
+main();
+```
+
 ## API
 
-### `new TimersManager(timerfiledir?: string)`
+### `new JSONLTimersManager(timerfiledir?: string)`
 
-Creates a new `TimersManager` instance.
+Creates a manager for timers stored in the **JSON Lines** format.
 
 **Parameters:**
-- `timerfiledir` (string, optional): The path to the timer file. The file extension determines the storage format.
-    - **`.jsonl` extension**: Timers are stored in the feature-rich **JSON Lines** format.
-    - **Other extensions (or no extension)**: Timers are stored in the lightweight **plain-text** format.
-    - If omitted, the default is `.timers.jsonl` in the project root.
+- `timerfiledir` (string, optional): The path to the timer file. If omitted, the default is `.timers.jsonl` in the project root.
+
+### `new PlainTextTimersManager(timerfiledir?: string)`
+
+Creates a manager for timers stored in the **plain-text** format.
+
+**Parameters:**
+- `timerfiledir` (string, optional): The path to the timer file. If omitted, the default is `.timers` in the project root.
+
+---
 
 ### `createTimer(length: number, title?: string, description?: string): Promise<string>`
 
@@ -67,8 +100,8 @@ Creates a new timer.
 
 **Parameters:**
 - `length` (number): Timer duration in milliseconds
-- `title` (string, optional): A title for the timer. Only stored if using a `.jsonl` file.
-- `description` (string, optional): A description for the timer. Only stored if using a `.jsonl` file.
+- `title` (string, optional): A title for the timer. **Only available for `JSONLTimersManager`**.
+- `description` (string, optional): A description for the timer. **Only available for `JSONLTimersManager`**.
 
 **Returns:** Promise that resolves to the timer ID (UUID)
 
@@ -128,25 +161,27 @@ type Timer = {
 - `npm run test`: Test the compiled code
 - `npm run lint`: Lint all codes
 
-## Storage
+## Storage Formats
 
-You can choose between two storage formats based on the file extension you provide to the `TimersManager` constructor.
+You can choose between two storage formats by selecting the appropriate manager class.
 
-### 1. JSON Lines (`.jsonl`) - Default
-This is the default format, used when the timer file has a `.jsonl` extension.
+### 1. JSON Lines (via `JSONLTimersManager`)
+This is the recommended format for storing rich metadata.
 
-- **Pros**: Allows for storing rich metadata like `title` and `description`.
+- **Pros**: Allows for storing `title` and `description`.
 - **Cons**: Involves JSON parsing, which may have a minor performance overhead.
+- **Default File**: `.timers.jsonl`
 - **Format**:
   ```json
   {"id":"...","start":1678886400000,"stop":1678886405000,"title":"My Timer","description":"..."}
   ```
 
-### 2. Plain Text
-This format is used for any file that does not have a `.jsonl` extension (e.g., `.timers`).
+### 2. Plain Text (via `PlainTextTimersManager`)
+This format is more lightweight and slightly faster.
 
-- **Pros**: More lightweight and slightly faster due to avoiding JSON parsing.
+- **Pros**: Simple and efficient.
 - **Cons**: Cannot store additional data like `title` or `description`.
+- **Default File**: `.timers`
 - **Format**:
   ```
   {id} {start_timestamp} {stop_timestamp}
@@ -161,5 +196,3 @@ Licensed under the Apache License, Version 2.0. See the `LICENSE` file for detai
 ## Repository
 
 https://github.com/SUKEsann2000/eternal-timer
-
-
