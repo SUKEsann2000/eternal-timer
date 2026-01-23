@@ -113,7 +113,7 @@ export class PlainTextTimersManager extends TimersManager {
 	 * @description Starts monitoring expired timers asynchronously and returns immediately. The callback is invoked asynchronously when a timer expires.
 	 * The callback is awaited before continuing.
 	 * @param callback Function invoked when an expired timer is detected (called asynchronously)
-	 * @param interval (number, optional): Check interval in milliseconds (default: 50ms)
+	 * @param interval (number, optional): Check interval in milliseconds (default: 200ms)
 	 * @throws If file operation fails
 	 * @returns (NodeJS.Timeout) intervalId interval id of checkTimers
 	 * @example
@@ -121,7 +121,7 @@ export class PlainTextTimersManager extends TimersManager {
 	 *     console.log(`A timer was stopped: ${timer.id}`);
 	 * });
 	 */
-	public checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 50): NodeJS.Timeout {
+	public checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 200): NodeJS.Timeout {
 		return setInterval(async () => {
 			if (this.checkLock) return;
 			this.checkLock = true;

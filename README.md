@@ -127,7 +127,7 @@ The callback is awaited before the next timer check continues.
 
 **Parameters:**
 - `callback`: Function invoked when an expired timer is detected (called during periodic checks and awaited)
-- `interval` (number, optional): Check interval in milliseconds (default: 50ms)
+- `interval` (number, optional): Check interval in milliseconds (default: 200ms)
 
 **Returns:** interval id of checkTimers
 
