@@ -85,7 +85,7 @@ export class PlainTextTimersManager extends TimersManager {
 			
 			const rl = readline.createInterface({
 				input: fs.createReadStream(this.timerfiledir),
-				crlfDelay: Infinity
+				crlfDelay: Infinity,
 			});
 			const newTimersDataLines: string[] = [];
 			let found = false;
