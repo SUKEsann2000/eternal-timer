@@ -1,6 +1,6 @@
 {
   "name": "eternal-timer",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "timer for node.js package",
   "scripts": {
     "dev": "nodemon --watch src --exec ts-node src/index.ts",
@@ -13,8 +13,13 @@
     "type": "git",
     "url": "git+https://github.com/SUKEsann2000/eternal-timer.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "timer",
+    "time-tracking",
+    "jsonl",
+    "append-only"
+  ],  
+  "author": "SUKEsann2000",
   "license": "Apache-2.0",
   "type": "module",
   "bugs": {
