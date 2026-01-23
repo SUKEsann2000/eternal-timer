@@ -66,6 +66,13 @@ export abstract class TimersManager {
 		}
 	}
 
+	/**
+	 * checkTimerfileSyntax
+	 * @description Checks the syntax of the timer file.
+	 * @param fileData 
+	 * @returns void
+	 * @throws If syntax is invalid
+	 */
 	protected abstract checkTimerfileSyntax(fileData: string): Promise<void>;
 
 	/**
@@ -155,10 +162,12 @@ export class JSONLTimersManager extends TimersManager {
      * createTimer
      * @description Creates a new timer.
      * @param length Timer duration in milliseconds
+	 * @param title(string, optional) Title of the timer(only for JSONLTimersManager)
+	 * @param description(string, optional) Description of the timer(only for JSONLTimersManager)
      * @returns Promise that resolves to the timer ID (UUID)
      * @throws If length is invalid(e.g. length < 0) or file operation fails
      * @example
-     * const manager = new TimersManager();
+     * const manager = new JSONLTimersManager();
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
@@ -309,6 +318,13 @@ export class PlainTextTimersManager extends TimersManager {
 		return ".timers";
 	}
 
+	/**
+	 * checkTimerfileSyntax
+	 * @description Checks the syntax of the timer file.
+	 * @param fileData 
+	 * @returns void
+	 * @throws If syntax is invalid
+	 */
 	protected async checkTimerfileSyntax(fileData: string): Promise<void> {
 		const throwing = () => {
 			throw new Error(`Timer file's syntax is wrong`);
@@ -327,6 +343,17 @@ export class PlainTextTimersManager extends TimersManager {
 		return;
 	}
 
+	/**
+	 * createTimer
+	 * @description Creates a new timer.
+	 * @param length 
+	 * @returns Promise that resolves to the timer ID (UUID)
+	 * @throws If length is invalid(e.g. length < 0) or file operation fails
+	 * @example
+	 * const manager = new PlainTextTimersManager();
+	 * const newTimer = await manager.createTimer(5000);
+	 * // newTimer will be id of the timer
+	 */
 	public async createTimer(length: number): Promise<string> {
 		try {
 			if (length < 0) {
@@ -350,6 +377,15 @@ export class PlainTextTimersManager extends TimersManager {
 		}
 	}
 
+	/**
+	 * removeTimer
+	 * @description Removes a timer by ID.
+	 * @param id ID of the timer to remove
+	 * @returns void
+	 * @throws If file operation fails
+	 * @example
+	 * await manager.removeTimer(id);
+	 */
 	public async removeTimer(id: string): Promise<void> {
 		try {
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
@@ -378,6 +414,19 @@ export class PlainTextTimersManager extends TimersManager {
 		}
 	}
 
+	/**
+	 * checkTimers
+	 * @description Starts monitoring expired timers asynchronously and returns immediately. The callback is invoked asynchronously when a timer expires.
+	 * The callback is awaited before continuing.
+	 * @param callback Function invoked when an expired timer is detected (called asynchronously)
+	 * @param interval (number, optional): Check interval in milliseconds (default: 50ms)
+	 * @throws If file operation fails
+	 * @returns (NodeJS.Timeout) intervalId interval id of checkTimers
+	 * @example
+	 * const interval = manager.checkTimers((timer) => {
+	 *     console.log(`A timer was stopped: ${timer.id}`);
+	 * });
+	 */
 	public checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 50): NodeJS.Timeout {
 		return setInterval(async () => {
 			if (this.checkLock) return;
@@ -417,7 +466,16 @@ export class PlainTextTimersManager extends TimersManager {
 		}, interval);
 	}
 
-		public async showTimers(): Promise<Timer[]> {
+	/**
+	 * showTimers
+	 * @description Retrieves all active timers.
+	 * @returns Array of `Timer` objects
+	 * @throws If file operation fails
+	 * @example
+	 * const timers = await manager.showTimers();
+	 * console.log(JSON.stringify(timers))
+	 */
+	public async showTimers(): Promise<Timer[]> {
 		try {
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			const timersData: string[] = timersRaw.split(/\r?\n/);
