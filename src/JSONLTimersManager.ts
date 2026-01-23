@@ -151,7 +151,7 @@ export class JSONLTimersManager extends TimersManager {
 					const now = Date.now();
 					if (Number(timerData.stop) <= now) {
 						await this.removeTimer(timerData.id);
-						await callback(timerData);
+						callback(timerData);
 					}
 				}
 			} catch (e) {

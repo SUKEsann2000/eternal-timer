@@ -143,7 +143,7 @@ export class PlainTextTimersManager extends TimersManager {
 					const now = Date.now();
 					if (Number(timer.stop) <= now) {
 						await this.removeTimer(timer.id);
-						await callback(timer).catch((e) => {
+						callback(timer).catch((e) => {
 							Log.ensureLogger().then(() => {
 								if (Log.loggerInstance) {
 									Log.loggerInstance.error(`Error in timer callback: ${e}`);
