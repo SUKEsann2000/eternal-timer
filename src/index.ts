@@ -79,7 +79,7 @@ export abstract class TimersManager {
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-	public abstract createTimer(...args: any[]): Promise<string>;
+	public abstract createTimer(length:number, title?: string, description?: string): Promise<string>;
 
 	/**
      * removeTimer
@@ -90,7 +90,7 @@ export abstract class TimersManager {
      * @example
      * await manager.removeTimer(id);
      */
-	public abstract removeTimer(...args: any[]): Promise<void>;
+	public abstract removeTimer(id: string): Promise<void>;
 
 	/**
      * @description Starts monitoring expired timers asynchronously and returns immediately. The callback is invoked asynchronously when a timer expires.
@@ -104,7 +104,7 @@ export abstract class TimersManager {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-	public abstract checkTimers(...args: any[]): NodeJS.Timeout;
+	public abstract checkTimers(callback: (timer: Timer) => Promise<void>, interval?: number): NodeJS.Timeout;
 
 	/**
      * showTimers
@@ -115,7 +115,7 @@ export abstract class TimersManager {
      * const timers = await manager.showTimers();
      * console.log(JSON.stringify(timers))
      */
-	public abstract showTimers(...args: any[]): Promise<Timer[]>;
+	public abstract showTimers(): Promise<Timer[]>;
 }
 
 /**
