@@ -60,8 +60,7 @@ export class PlainTextTimersManager extends TimersManager {
 			// uuid, start, end
 			const id = uuidv4();
 			const now = Date.now();
-			let newTimerData: string;
-			newTimerData = `${id} ${now.toString()} ${(now + length).toString()}`;
+			const newTimerData = `${id} ${now.toString()} ${(now + length).toString()}`;
 			await fs.promises.appendFile(this.timerfiledir, newTimerData + "\n");
 			return id;
 		} catch (e) {
@@ -83,7 +82,7 @@ export class PlainTextTimersManager extends TimersManager {
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			await this.checkTimerfileSyntax(timersRaw);
 			
-			let newTimersData: string = "";
+			const newTimersData: string[] = [];
 			const timersData: string[] = timersRaw.split(/\r?\n/);
 			let found = false;
 
@@ -94,12 +93,12 @@ export class PlainTextTimersManager extends TimersManager {
 					found = true;
 					continue;
 				}
-				newTimersData += timerData + "\n";
+				newTimersData.push(timerData);
 			}            
 			if (!found) {
 				throw new Error(`Timer with id ${id} not found`);
 			}
-			await fs.promises.writeFile(this.timerfiledir, newTimersData, "utf-8");
+			await fs.promises.writeFile(this.timerfiledir, newTimersData.join("\n"), "utf-8");
 			return;
 		} catch (e) {
 			throw new Error(`Error when removing timer: ${e}`);

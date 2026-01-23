@@ -44,7 +44,7 @@ async function cjs_test() {
 			console.log("❌ Delete Timer failed");
 			return false;
 		}
-	}
+	};
 
 	console.log("=== COMMONJS_TEST ===");
 	await runTest(true);

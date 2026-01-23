@@ -16,7 +16,7 @@ import { Log } from "./Log.js";
  */
 export class JSONLTimersManager extends TimersManager {
 	protected getDefaultFilename(): string {
-		return ".timers.jsonl"
+		return ".timers.jsonl";
 	}
 
 	protected async checkTimerfileSyntax(fileData: string): Promise<void> {
@@ -65,15 +65,13 @@ export class JSONLTimersManager extends TimersManager {
 			// uuid, start, end
 			const id = uuidv4();
 			const now = Date.now();
-			let newTimerData: string;
-			const json: Timer = {
+			const newTimerData: string = JSON.stringify({
 				id,
 				start: now,
 				stop: (now + length),
 				...(title !== undefined && { title }),
 				...(description !== undefined && { description }),
-			};
-			newTimerData = JSON.stringify(json, null, 0);
+			});
 			await fs.promises.appendFile(this.timerfiledir, newTimerData + "\n");
 			return id;
 		} catch (e) {

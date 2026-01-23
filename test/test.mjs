@@ -44,7 +44,7 @@ export async function module_test() {
 			console.log("❌ Delete Timer failed");
 			return false;
 		}
-	}
+	};
 
 	console.log("=== MODULE_TEST ===");
 	await runTest(true);
