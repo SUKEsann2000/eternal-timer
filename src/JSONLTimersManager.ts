@@ -1,5 +1,6 @@
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
+import readline from "readline";
 
 import type { Timer } from "./types.js";
 import { TimersManager } from "./TimersManager.js";
@@ -92,17 +93,18 @@ export class JSONLTimersManager extends TimersManager {
 		try {
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			await this.checkTimerfileSyntax(timersRaw);
-			
+
+			const rl = readline.createInterface({
+				input: fs.createReadStream(this.timerfiledir),
+				crlfDelay: Infinity,
+			});
+
 			let newTimersData: string = "";
-			const timersData: Timer[] = timersRaw
-				.split(/\r?\n/)
-				.filter(t => t.trim())
-				.map(line => JSON.parse(line) as Timer);
-
 			let found = false;
-			for (const timerData of timersData) {
-				if (!timerData) continue;
 
+			for await (const line of rl) {
+				if (!line.trim()) continue;
+				const timerData: Timer = JSON.parse(line);
 				if (timerData.id === id) {
 					found = true;
 					continue;
@@ -112,6 +114,7 @@ export class JSONLTimersManager extends TimersManager {
 			if (!found) {
 				throw new Error(`Timer with id ${id} not found`);
 			}
+
 			await fs.promises.writeFile(this.timerfiledir, newTimersData, "utf-8");
 			return;
 		} catch (e) {
@@ -137,25 +140,18 @@ export class JSONLTimersManager extends TimersManager {
 			this.checkLock = true;
 
 			try {
-				const timersDataRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
-				const timersMap = new Map<string, Timer>();
+				const rl = readline.createInterface({
+					input: fs.createReadStream(this.timerfiledir),
+					crlfDelay: Infinity,
+				});
 
-				const timersData: Timer[] = timersDataRaw
-					.split(/\r?\n/)
-					.filter(line => line.trim())
-					.map(line => JSON.parse(line) as Timer);
-
-				for (const timer of timersData) {
-					timersMap.set(timer.id, timer);
-				}
-
-				const now = Date.now();
-				for (const timer of timersMap.values()) {
-					if (Number(timer.stop) <= now) {
-						await this.removeTimer(timer.id).finally(() => {
-							this.checkLock = false;
-						});
-						await callback(timer);
+				for await (const line of rl) {
+					if (!line.trim()) continue;
+					const timerData: Timer = JSON.parse(line);
+					const now = Date.now();
+					if (Number(timerData.stop) <= now) {
+						await this.removeTimer(timerData.id);
+						await callback(timerData);
 					}
 				}
 			} catch (e) {
@@ -163,6 +159,8 @@ export class JSONLTimersManager extends TimersManager {
 				if (Log.loggerInstance) {
 					Log.loggerInstance.error(`Error when checking alarm: ${e}`);
 				}
+			} finally {
+				this.checkLock = false;
 			}
 		}, interval);
 	}

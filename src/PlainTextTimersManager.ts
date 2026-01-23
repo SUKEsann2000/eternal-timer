@@ -1,5 +1,6 @@
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
+import readline from "readline";
 
 import type { Timer } from "./types.js";
 import { TimersManager } from "./TimersManager.js";
@@ -82,23 +83,25 @@ export class PlainTextTimersManager extends TimersManager {
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			await this.checkTimerfileSyntax(timersRaw);
 			
-			const newTimersData: string[] = [];
-			const timersData: string[] = timersRaw.split(/\r?\n/);
+			const rl = readline.createInterface({
+				input: fs.createReadStream(this.timerfiledir),
+				crlfDelay: Infinity
+			});
+			const newTimersDataLines: string[] = [];
 			let found = false;
-
-			for (const timerData of timersData) {
-				if (!timerData.trim()) continue;
-				const [timerId] = timerData.split(" ");
+			for await (const line of rl) {
+				if (!line.trim()) continue;
+				const [timerId] = line.split(" ");
 				if (timerId === id) {
 					found = true;
 					continue;
 				}
-				newTimersData.push(timerData);
-			}            
+				newTimersDataLines.push(line);
+			}
 			if (!found) {
 				throw new Error(`Timer with id ${id} not found`);
 			}
-			await fs.promises.writeFile(this.timerfiledir, newTimersData.join("\n"), "utf-8");
+			await fs.promises.writeFile(this.timerfiledir, newTimersDataLines.join("\n"), "utf-8");
 			return;
 		} catch (e) {
 			throw new Error(`Error when removing timer: ${e}`);
@@ -124,28 +127,29 @@ export class PlainTextTimersManager extends TimersManager {
 			this.checkLock = true;
 
 			try {
-				const timersDataRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
-				const timersMap = new Map<string, Timer>();
+				const rl = readline.createInterface({
+					input: fs.createReadStream(this.timerfiledir),
+					crlfDelay: Infinity,
+				});
 
-				const timersData: string[] = timersDataRaw.split(/\r?\n/);
-
-				for (const timerData of timersData) {
-					if (!timerData.trim()) continue;
-					const [id, startStr, stopStr] = timerData.split(" ");
-					timersMap.set(id! ,{
+				for await (const line of rl) {
+					if (!line.trim()) continue;
+					const [id, startStr, stopStr] = line.split(" ");
+					const timer: Timer = {
 						id: id!,
 						start: Number(startStr!),
 						stop: Number(stopStr!),
-					});
-				}
-
-				const now = Date.now();
-				for (const timer of timersMap.values()) {
+					};
+					const now = Date.now();
 					if (Number(timer.stop) <= now) {
-						await this.removeTimer(timer.id).finally(() => {
-							this.checkLock = false;
+						await this.removeTimer(timer.id);
+						await callback(timer).catch((e) => {
+							Log.ensureLogger().then(() => {
+								if (Log.loggerInstance) {
+									Log.loggerInstance.error(`Error in timer callback: ${e}`);
+								}
+							});
 						});
-						await callback(timer);
 					}
 				}
 			} catch (e) {
@@ -153,6 +157,8 @@ export class PlainTextTimersManager extends TimersManager {
 				if (Log.loggerInstance) {
 					Log.loggerInstance.error(`Error when checking alarm: ${e}`);
 				}
+			} finally {
+				this.checkLock = false;
 			}
 		}, interval);
 	}
