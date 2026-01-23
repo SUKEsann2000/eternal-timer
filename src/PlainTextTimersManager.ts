@@ -52,7 +52,7 @@ export class PlainTextTimersManager extends TimersManager {
 			if (length < 0) {
 				throw new Error(`Invailed length: ${length}`);
 			}
-			
+
 			const timersRaw = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			await this.checkTimerfileSyntax(timersRaw);
 
@@ -143,12 +143,11 @@ export class PlainTextTimersManager extends TimersManager {
 					const now = Date.now();
 					if (Number(timer.stop) <= now) {
 						await this.removeTimer(timer.id);
-						callback(timer).catch((e) => {
-							Log.ensureLogger().then(() => {
-								if (Log.loggerInstance) {
-									Log.loggerInstance.error(`Error in timer callback: ${e}`);
-								}
-							});
+						callback(timer).catch(async (e) => {
+							await Log.ensureLogger()
+							if (Log.loggerInstance) {
+								Log.loggerInstance.error(`Error in timer callback: ${e}`);
+							}
 						});
 					}
 				}
