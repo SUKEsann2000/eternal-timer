@@ -71,6 +71,9 @@ async function main() {
     const interval = manager.checkTimers(async (timer) => {
         console.log('Timer expired:', timer.id);
     });
+    
+    // Remove a timer
+	await manager.removeTimer(timerId);
 }
 
 main();
