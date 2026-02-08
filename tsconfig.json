@@ -1,9 +1,17 @@
 {
-  "exclude": ["src/**/*", "eslint/**/*"],
+  "exclude": [
+    "eslint/**/*"
+  ],
+  "include": [
+    "src/**/*.ts"
+  ],
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
     "target": "esnext",
+
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
 
     "types": ["node"],
 
