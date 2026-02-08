@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import searchRoot from "./searchRoot.js";
-import type { Timer } from "./types.js";
+import type { CreateTimerOptions, StorageType, Timer } from "./types.js";
 
 /**
  * TimersManager
@@ -56,7 +56,7 @@ export abstract class TimersManager {
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-	public abstract createTimer(length:number, title?: string, description?: string): Promise<string>;
+     public abstract createTimer<T extends StorageType>(length:number, createTimerOptions: CreateTimerOptions<T>): Promise<string>;
 
 	/**
      * removeTimer
@@ -81,7 +81,7 @@ export abstract class TimersManager {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-	public abstract checkTimers(callback: (timer: Timer) => Promise<void>, interval?: number): NodeJS.Timeout;
+     public abstract checkTimers<T extends StorageType>(callback: (timer: Timer<T>) => Promise<void>, interval?: number): NodeJS.Timeout;
 
 	/**
      * showTimers
@@ -92,5 +92,5 @@ export abstract class TimersManager {
      * const timers = await manager.showTimers();
      * console.log(JSON.stringify(timers))
      */
-	public abstract showTimers(): Promise<Timer[]>;
+	public abstract showTimers<T extends StorageType>(): Promise<Timer<T>[]>;
 }

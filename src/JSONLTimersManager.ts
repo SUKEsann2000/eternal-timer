@@ -2,7 +2,7 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import readline from "readline";
 
-import type { Timer } from "./types.js";
+import type { Timer, CreateTimerOptions } from "./types.js";
 import { TimersManager } from "./TimersManager.js";
 import { Log } from "./Log.js";
 
@@ -29,7 +29,7 @@ export class JSONLTimersManager extends TimersManager {
 			.map(l => l.trim())
 			.filter(l => l !== "");
 		for (const timerData of timersData) {
-			const parsed: Timer = JSON.parse(timerData);
+			const parsed: Timer<"JSON"> = JSON.parse(timerData);
 			if (!parsed.id || typeof parsed.id !== "string" || parsed.id.length !== 36) throwing();
 			if (!parsed.start || typeof parsed.start !== "number" || parsed.start.toString().trim() === "") throwing();
 			if (!parsed.stop || typeof parsed.stop !== "number" || parsed.stop.toString().trim() === "") throwing();
@@ -52,7 +52,7 @@ export class JSONLTimersManager extends TimersManager {
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-	public async createTimer(length: number, title?: string, description?: string): Promise<string> {
+	public async createTimer(length: number, { title, description }: CreateTimerOptions<"JSON">): Promise<string> {
 		try {
 			if (length < 0) {
 				throw new Error(`Invailed length: ${length}`);
@@ -104,7 +104,7 @@ export class JSONLTimersManager extends TimersManager {
 
 			for await (const line of rl) {
 				if (!line.trim()) continue;
-				const timerData: Timer = JSON.parse(line);
+				const timerData: Timer<"JSON"> = JSON.parse(line);
 				if (timerData.id === id) {
 					found = true;
 					continue;
@@ -134,7 +134,7 @@ export class JSONLTimersManager extends TimersManager {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-	public checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 200): NodeJS.Timeout {
+	public checkTimers(callback: (timer: Timer<"JSON">) => Promise<void>, interval: number = 200): NodeJS.Timeout {
 		return setInterval(async () => {
 			if (this.checkLock) return;
 			this.checkLock = true;
@@ -147,7 +147,7 @@ export class JSONLTimersManager extends TimersManager {
 
 				for await (const line of rl) {
 					if (!line.trim()) continue;
-					const timerData: Timer = JSON.parse(line);
+					const timerData: Timer<"JSON"> = JSON.parse(line);
 					const now = Date.now();
 					if (Number(timerData.stop) <= now) {
 						await this.removeTimer(timerData.id);
@@ -179,13 +179,13 @@ export class JSONLTimersManager extends TimersManager {
      * const timers = await manager.showTimers();
      * console.log(JSON.stringify(timers))
      */
-	public async showTimers(): Promise<Timer[]> {
+	public async showTimers(): Promise<Timer<"JSON">[]> {
 		try {
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
-			const timersData: Timer[] = timersRaw
+			const timersData: Timer<"JSON">[] = timersRaw
 				.split(/\r?\n/)
 				.filter(t => t.trim())
-				.map(line => JSON.parse(line) as Timer);
+				.map(line => JSON.parse(line) as Timer<"JSON">);
 			
 			return timersData;
 		} catch (e) {

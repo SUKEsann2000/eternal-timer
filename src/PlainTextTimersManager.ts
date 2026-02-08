@@ -2,7 +2,7 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import readline from "readline";
 
-import type { Timer } from "./types.js";
+import type { Timer, CreateTimerOptions } from "./types.js";
 import { TimersManager } from "./TimersManager.js";
 import { Log } from "./Log.js";
 
@@ -47,8 +47,14 @@ export class PlainTextTimersManager extends TimersManager {
 	 * const newTimer = await manager.createTimer(5000);
 	 * // newTimer will be id of the timer
 	 */
-	public async createTimer(length: number): Promise<string> {
+	public async createTimer(length: number, createTimerOptions?: CreateTimerOptions<"PlainText">): Promise<string> {
 		try {
+			if (createTimerOptions) {
+				await Log.ensureLogger();
+				if (Log.loggerInstance) {
+					Log.loggerInstance.warn(`Tips: If you select PlainText storage type, you don't have to set createTimerOptions.`);
+				}
+			}
 			if (length < 0) {
 				throw new Error(`Invailed length: ${length}`);
 			}
@@ -121,7 +127,7 @@ export class PlainTextTimersManager extends TimersManager {
 	 *     console.log(`A timer was stopped: ${timer.id}`);
 	 * });
 	 */
-	public checkTimers(callback: (timer: Timer) => Promise<void>, interval: number = 200): NodeJS.Timeout {
+	public checkTimers(callback: (timer: Timer<"PlainText">) => Promise<void>, interval: number = 200): NodeJS.Timeout {
 		return setInterval(async () => {
 			if (this.checkLock) return;
 			this.checkLock = true;
@@ -135,7 +141,7 @@ export class PlainTextTimersManager extends TimersManager {
 				for await (const line of rl) {
 					if (!line.trim()) continue;
 					const [id, startStr, stopStr] = line.split(" ");
-					const timer: Timer = {
+					const timer: Timer<"PlainText"> = {
 						id: id!,
 						start: Number(startStr!),
 						stop: Number(stopStr!),
@@ -171,12 +177,12 @@ export class PlainTextTimersManager extends TimersManager {
 	 * const timers = await manager.showTimers();
 	 * console.log(JSON.stringify(timers))
 	 */
-	public async showTimers(): Promise<Timer[]> {
+	public async showTimers(): Promise<Timer<"PlainText">[]> {
 		try {
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			const timersData: string[] = timersRaw.split(/\r?\n/);
 
-			const timersJSON: Timer[] = [];
+			const timersJSON: Timer<"PlainText">[] = [];
 			for (const timerData of timersData) {
 				const splitedTimerData = timerData.split(" ");
 				if (!timerData.trim()) continue;
