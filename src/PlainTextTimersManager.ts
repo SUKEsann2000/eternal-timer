@@ -6,7 +6,7 @@ import type { Timer, CreateTimerOptions } from "./types.js";
 import { TimersManager } from "./TimersManager.js";
 import { Log } from "./Log.js";
 
-export class PlainTextTimersManager extends TimersManager {
+export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 	protected getDefaultFilename(): string {
 		return ".timers";
 	}

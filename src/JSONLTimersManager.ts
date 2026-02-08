@@ -15,7 +15,7 @@ import { Log } from "./Log.js";
  * - Timers are persisted in a file
  * - Expired timers are detected by polling
  */
-export class JSONLTimersManager extends TimersManager {
+export class JSONLTimersManager extends TimersManager<"JSON"> {
 	protected getDefaultFilename(): string {
 		return ".timers.jsonl";
 	}
@@ -52,7 +52,7 @@ export class JSONLTimersManager extends TimersManager {
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-	public async createTimer(length: number, { title, description }: CreateTimerOptions<"JSON">): Promise<string> {
+	public async createTimer(length: number, { title, description }: CreateTimerOptions<"JSON"> = {}): Promise<string> {
 		try {
 			if (length < 0) {
 				throw new Error(`Invailed length: ${length}`);

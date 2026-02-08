@@ -12,7 +12,7 @@ import type { CreateTimerOptions, StorageType, Timer } from "./types.js";
  * - Timers are persisted in a file
  * - Expired timers are detected by polling
  */
-export abstract class TimersManager {
+export abstract class TimersManager<T extends StorageType> {
 	protected readonly timerfiledir: string;
 	protected checkLock: boolean = false;
 
@@ -56,7 +56,7 @@ export abstract class TimersManager {
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-     public abstract createTimer<T extends StorageType>(length:number, createTimerOptions: CreateTimerOptions<T>): Promise<string>;
+     public abstract createTimer(length:number, createTimerOptions: CreateTimerOptions<T>): Promise<string>;
 
 	/**
      * removeTimer
@@ -81,7 +81,7 @@ export abstract class TimersManager {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-     public abstract checkTimers<T extends StorageType>(callback: (timer: Timer<T>) => Promise<void>, interval?: number): NodeJS.Timeout;
+     public abstract checkTimers(callback: (timer: Timer<T>) => Promise<void>, interval?: number): NodeJS.Timeout;
 
 	/**
      * showTimers
@@ -92,5 +92,5 @@ export abstract class TimersManager {
      * const timers = await manager.showTimers();
      * console.log(JSON.stringify(timers))
      */
-	public abstract showTimers<T extends StorageType>(): Promise<Timer<T>[]>;
+	public abstract showTimers(): Promise<Timer<T>[]>;
 }
