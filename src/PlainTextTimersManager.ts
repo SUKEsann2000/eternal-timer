@@ -18,7 +18,7 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 	 * @returns void
 	 * @throws If syntax is invalid
 	 */
-	protected async checkTimerfileSyntax(fileData: string): Promise<void> {
+	protected override async checkTimerfileSyntax(fileData: string): Promise<void> {
 		const throwing = () => {
 			throw new Error(`Timer file's syntax is wrong`);
 		};
@@ -47,7 +47,7 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 	 * const newTimer = await manager.createTimer(5000);
 	 * // newTimer will be id of the timer
 	 */
-	public async createTimer(length: number, createTimerOptions?: CreateTimerOptions<"PlainText">): Promise<string> {
+	public override async createTimer(length: number, createTimerOptions?: CreateTimerOptions<"PlainText">): Promise<string> {
 		try {
 			if (createTimerOptions) {
 				await Log.ensureLogger();
@@ -84,7 +84,7 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 	 * @example
 	 * await manager.removeTimer(id);
 	 */
-	public async removeTimer(id: string): Promise<void> {
+	public override async removeTimer(id: string): Promise<void> {
 		try {
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			await this.checkTimerfileSyntax(timersRaw);
@@ -127,7 +127,7 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 	 *     console.log(`A timer was stopped: ${timer.id}`);
 	 * });
 	 */
-	public checkTimers(callback: (timer: Timer<"PlainText">) => Promise<void>, interval: number = 200): NodeJS.Timeout {
+	public override checkTimers(callback: (timer: Timer<"PlainText">) => Promise<void>, interval: number = 200): NodeJS.Timeout {
 		return setInterval(async () => {
 			if (this.checkLock) return;
 			this.checkLock = true;
@@ -177,7 +177,7 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 	 * const timers = await manager.showTimers();
 	 * console.log(JSON.stringify(timers))
 	 */
-	public async showTimers(): Promise<Timer<"PlainText">[]> {
+	public override async showTimers(): Promise<Timer<"PlainText">[]> {
 		try {
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			const timersData: string[] = timersRaw.split(/\r?\n/);

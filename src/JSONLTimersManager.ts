@@ -16,7 +16,7 @@ import { Log } from "./Log.js";
  * - Expired timers are detected by polling
  */
 export class JSONLTimersManager extends TimersManager<"JSON"> {
-	protected getDefaultFilename(): string {
+	protected override getDefaultFilename(): string {
 		return ".timers.jsonl";
 	}
 
@@ -52,7 +52,7 @@ export class JSONLTimersManager extends TimersManager<"JSON"> {
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-	public async createTimer(length: number, { title, description }: CreateTimerOptions<"JSON"> = {}): Promise<string> {
+	public override async createTimer(length: number, { title, description }: CreateTimerOptions<"JSON"> = {}): Promise<string> {
 		try {
 			if (length < 0) {
 				throw new Error(`Invailed length: ${length}`);
@@ -89,7 +89,7 @@ export class JSONLTimersManager extends TimersManager<"JSON"> {
      * @example
      * await manager.removeTimer(id);
      */
-	public async removeTimer(id: string): Promise<void> {
+	public override async removeTimer(id: string): Promise<void> {
 		try {
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			await this.checkTimerfileSyntax(timersRaw);
@@ -134,7 +134,7 @@ export class JSONLTimersManager extends TimersManager<"JSON"> {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-	public checkTimers(callback: (timer: Timer<"JSON">) => Promise<void>, interval: number = 200): NodeJS.Timeout {
+	public override checkTimers(callback: (timer: Timer<"JSON">) => Promise<void>, interval: number = 200): NodeJS.Timeout {
 		return setInterval(async () => {
 			if (this.checkLock) return;
 			this.checkLock = true;
@@ -179,7 +179,7 @@ export class JSONLTimersManager extends TimersManager<"JSON"> {
      * const timers = await manager.showTimers();
      * console.log(JSON.stringify(timers))
      */
-	public async showTimers(): Promise<Timer<"JSON">[]> {
+	public override async showTimers(): Promise<Timer<"JSON">[]> {
 		try {
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			const timersData: Timer<"JSON">[] = timersRaw
