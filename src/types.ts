@@ -11,5 +11,5 @@ export type Timer<T extends StorageType> = {
 
 export type CreateTimerOptions<T extends StorageType> = (T extends "JSON"
     ? { title?: string, description?: string }
-    : object
+    : never
 )
