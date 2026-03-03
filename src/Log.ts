@@ -25,25 +25,3 @@ export class Log{
 		return Log.logger;
 	}
 }
-
-/*
-let logger: Logger | null = null;
-let initPromise: Promise<void> | null = null;
-
-export async function ensureLogger() {
-	if (logger) return;
-	if (!initPromise) {
-		initPromise = (async () => {
-			try {
-				const logtape = await import("@logtape/logtape");
-				logger = logtape.getLogger(["eternal-timer"]);
-			} catch {
-				console.info(
-	  				"Tip: Install the optional package '@logtape/logtape' to customize logging behavior.",
-				);
-			}
-		})();
-	}
-	await initPromise;
-}
-*/
