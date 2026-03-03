@@ -70,8 +70,8 @@ export class JSONLTimersManager extends TimersManager<"JSON"> {
 				id,
 				start: now,
 				stop: (now + length),
-				...(options.title !== undefined && { title: options.title }),
-				...(options.description !== undefined && { description: options.description }),
+				...(typeof options === "object" && options.title !== undefined && { title: options.title }),
+				...(typeof options === "object" && options.description !== undefined && { description: options.description }),
 			});
 			await fs.promises.appendFile(this.timerfiledir, newTimerData + "\n");
 			return id;
