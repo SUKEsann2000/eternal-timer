@@ -11,7 +11,7 @@ export type CreateTimerOptions<T extends StorageType> = T extends "JSON"
           length: number;
           title?: string;
           description?: string;
-      }
+      } | number
     : T extends "PlainText"
       ? number
       : never;
