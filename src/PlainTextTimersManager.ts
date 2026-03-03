@@ -55,8 +55,8 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 					Log.loggerInstance.warn(`Tips: If you select PlainText storage type, you don't have to set createTimerOptions.`);
 				}
 			}
-			if (options.length < 0) {
-				throw new Error(`Invailed length: ${options.length}`);
+			if (options < 0) {
+				throw new Error(`Invailed length: ${options}`);
 			}
 
 			const timersRaw = await fs.promises.readFile(this.timerfiledir, "utf-8");
