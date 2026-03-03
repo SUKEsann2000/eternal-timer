@@ -54,6 +54,7 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
      */
 	public override async createTimer(options: CreateTimerOptions<"JSONL">): Promise<string> {
 		try {
+			let length = typeof options === "object" ? options.length : options
 			if (length < 0) {
 				throw new Error(`Invailed length: ${length}`);
 			}
