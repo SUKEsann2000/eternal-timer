@@ -4,8 +4,8 @@ async function cjs_test() {
 	const runTest = async(isJSONL) => {
 		const manager = isJSONL ? new JSONLTimersManager("test/.timers.jsonl") : new PlainTextTimersManager("test/.timers");
 
-		const timer1 = isJSONL ? await manager.createTimer(1000, { title: "TestTimer1" , description: "This is test1" }) : await manager.createTimer(1000);
-		const timer2 = isJSONL ? await manager.createTimer(1500, { title: "TestTimer2", description: "This is test2" }) : await manager.createTimer(1500);
+		const timer1 = isJSONL ? await manager.createTimer({ length: 1000, title: "TestTimer1" , description: "This is test1" }) : await manager.createTimer(1000);
+		const timer2 = isJSONL ? await manager.createTimer({ length: 1500, title: "TestTimer2", description: "This is test2" }) : await manager.createTimer(1500);
 	
 		const timersAfterCreate = await manager.showTimers();
 	
