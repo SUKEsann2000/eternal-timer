@@ -33,20 +33,25 @@ async function main() {
     const manager = new JSONLTimersManager();
 
     // Create a timer (5 seconds) with a title and description
-    const timerId = await manager.createTimer(5000, 'My Timer', 'This is a test timer.');
+    const timerId = await manager.createTimer({length: 5000, title: 'My Timer', description: 'This is a test timer.'});
     console.log('Timer created:', timerId);
 
     // Monitor timers (executes when timer expires)
     const interval = manager.checkTimers(async (timer) => {
         console.log('Timer expired:', timer.id, timer.title);
+        // Once the timer expires, you can remove it
+        await manager.removeTimer(timer.id);
     });
 
     // Display all timers
     const timers = await manager.showTimers();
     console.log('Active timers:', timers);
 
-    // Remove a timer
-    await manager.removeTimer(timerId);
+    // To stop monitoring, for example after 10 seconds
+    setTimeout(() => {
+        clearInterval(interval);
+        console.log('Stopped monitoring timers.');
+    }, 10000);
 }
 
 main();
@@ -70,10 +75,18 @@ async function main() {
     // Monitor timers
     const interval = manager.checkTimers(async (timer) => {
         console.log('Timer expired:', timer.id);
+        await manager.removeTimer(timer.id);
     });
+
+    // Display all timers
+    const timers = await manager.showTimers();
+    console.log('Active timers:', timers);
     
-    // Remove a timer
-	await manager.removeTimer(timerId);
+    // Stop monitoring after a while
+    setTimeout(() => {
+        clearInterval(interval);
+        console.log('Stopped monitoring timers.');
+    }, 10000);
 }
 
 main();
@@ -81,79 +94,94 @@ main();
 
 ## API
 
-### `new JSONLTimersManager(timerfiledir?: string)`
+### `JSONLTimersManager`
 
-Creates a manager for timers stored in the **JSON Lines** format.
+#### `constructor(timerfiledir?: string)`
+Creates a manager for timers stored in **JSON Lines** format.
 
-**Parameters:**
-- `timerfiledir` (string, optional): The path to the timer file. If omitted, the default is `.timers.jsonl` in the project root.
+- **`timerfiledir`** (optional, string): Path to the timer file. Defaults to `.timers.jsonl` in the project root.
 
-### `new PlainTextTimersManager(timerfiledir?: string)`
+### `PlainTextTimersManager`
 
-Creates a manager for timers stored in the **plain-text** format.
+#### `constructor(timerfiledir?: string)`
+Creates a manager for timers stored in **plain-text** format.
 
-**Parameters:**
-- `timerfiledir` (string, optional): The path to the timer file. If omitted, the default is `.timers` in the project root.
+- **`timerfiledir`** (optional, string): Path to the timer file. Defaults to `.timers` in the project root.
 
 ---
 
-### `createTimer(length: number, title?: string, description?: string): Promise<string>`
+### `createTimer(options: CreateTimerOptions<T>): Promise<string>`
 
-Creates a new timer.
+Creates a new timer and saves it to the file.
 
-**Parameters:**
-- `length` (number): Timer duration in milliseconds
-- `title` (string, optional): A title for the timer. **Only available for `JSONLTimersManager`**.
-- `description` (string, optional): A description for the timer. **Only available for `JSONLTimersManager`**.
+#### Parameters
 
-**Returns:** Promise that resolves to the timer ID (UUID)
+- **`options`**
 
-**Throws:** If length is invalid(e.g. length < 0) or file operation fails
+  When using `"PlainText"` storage:
+  - `number` — Timer duration in milliseconds.
+
+  When using `"JSONL"` storage:
+  - `{ length: number; title?: string; description?: string }`
+    - `length` (number): Timer duration in milliseconds.
+    - `title` (optional, string): A title for the timer.
+    - `description` (optional, string): A description for the timer.
+
+  - `number` — Timer duration in milliseconds.  
+    ⚠ Not recommended. See [Storage Formats](#storage-formats).
+
+**Returns** A `Promise<string>` that resolves to the timer's unique ID (UUID).
+
+**Throws** An error if: `length` is invalid (e.g., negative) or a file operation fails
 
 ### `removeTimer(id: string): Promise<void>`
 
-Removes a timer by ID.
+Removes a timer by its ID.
 
-**Parameters:**
-- `id` (string): ID of the timer to remove
+- **`id`**: The ID of the timer to remove.
 
-**Returns:** void
+**Returns:** A `Promise` that resolves when the timer is removed.
 
-**Throws:** If the timer with the specified ID is not found or if a file operation fails.
+**Throws:** An error if the timer with the specified ID is not found or if a file operation fails.
 
-### `checkTimers(callback: (timer: Timer) => Promise<void>, interval?: number): Promise<NodeJS.Timeout>`
+### `checkTimers(callback: (timer: Timer) => Promise<void>, interval?: number): NodeJS.Timeout`
 
-Starts monitoring expired timers and returns immediately.
+Starts monitoring for expired timers at a specified interval. This function runs asynchronously and will not block execution.
 
-The callback is invoked when a timer expires during periodic checks.
-The callback is awaited before the next timer check continues.
+When an expired timer is found, the provided `callback` function is invoked with the `timer` object. The function waits for the `callback`'s `Promise` to resolve before proceeding to the next check, preventing race conditions. Error handling has been added within the `callback` to prevent the application from crashing if an error occurs during timer processing.
 
-**Parameters:**
-- `callback`: Function invoked when an expired timer is detected (called during periodic checks and awaited)
-- `interval` (number, optional): Check interval in milliseconds (default: 200ms)
+- **`callback`**: An async function that is called with the expired `timer` object.
+- **`interval`** (optional, number): The interval in milliseconds to check for expired timers. Defaults to `200ms`.
 
-**Returns:** interval id of checkTimers
+**Returns:** A `NodeJS.Timeout` object that can be used with `clearInterval()` to stop monitoring.
 
-**Throws:** If file operation fails
+**Throws:** An error if a file operation fails during monitoring.
 
 ### `showTimers(): Promise<Timer[]>`
 
 Retrieves all active timers.
 
-**Returns:** Array of `Timer` objects
+**Returns:** A `Promise` that resolves to an array of `Timer` objects.
 
-**Throws:** If file operation fails
+**Throws:** An error if a file operation fails.
 
 ## Type Definition
 
+The `StorageType` has the following structure:
 ```typescript
-type Timer = {
-    id: string;      // Unique timer identifier (UUID)
-    start: number;   // Timer start timestamp
-    stop: number;    // Timer end timestamp
-    title?: string;
-    description?: string;
-}
+type StorageType = "JSONL" | "PlainText"
+```
+
+The `Timer` object has the following structure:
+
+```typescript
+type Timer<T extends StorageType> = {
+  id: string;
+  start: number;
+  stop: number;
+} & (T extends "JSONL"
+  ? { title?: string; description?: string }
+  : object);
 ```
 
 ## Scripts
@@ -171,7 +199,7 @@ You can choose between two storage formats by selecting the appropriate manager 
 ### 1. JSON Lines (via `JSONLTimersManager`)
 This is the recommended format for storing rich metadata.
 
-- **Pros**: Allows for storing `title` and `description`.
+- **Pros**: Allows for storing `title` and `description`. Improved memory efficiency due to line-by-line file reading.
 - **Cons**: Involves JSON parsing, which may have a minor performance overhead.
 - **Default File**: `.timers.jsonl`
 - **Format**:
@@ -182,7 +210,7 @@ This is the recommended format for storing rich metadata.
 ### 2. Plain Text (via `PlainTextTimersManager`)
 This format is more lightweight and slightly faster.
 
-- **Pros**: Simple and efficient.
+- **Pros**: Simple and efficient. Improved memory efficiency due to line-by-line file reading.
 - **Cons**: Cannot store additional data like `title` or `description`.
 - **Default File**: `.timers`
 - **Format**:
