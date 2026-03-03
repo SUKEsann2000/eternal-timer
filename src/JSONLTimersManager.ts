@@ -52,7 +52,7 @@ export class JSONLTimersManager extends TimersManager<"JSON"> {
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-	public override async createTimer(length: number, { title, description }: CreateTimerOptions<"JSON"> = {}): Promise<string> {
+	public override async createTimer(options: CreateTimerOptions<"JSON">): Promise<string> {
 		try {
 			if (length < 0) {
 				throw new Error(`Invailed length: ${length}`);
@@ -70,8 +70,8 @@ export class JSONLTimersManager extends TimersManager<"JSON"> {
 				id,
 				start: now,
 				stop: (now + length),
-				...(title !== undefined && { title }),
-				...(description !== undefined && { description }),
+				...(options.title !== undefined && { title: options.title }),
+				...(options.description !== undefined && { description: options.description }),
 			});
 			await fs.promises.appendFile(this.timerfiledir, newTimerData + "\n");
 			return id;

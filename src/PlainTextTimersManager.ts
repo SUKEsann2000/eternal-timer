@@ -47,16 +47,16 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 	 * const newTimer = await manager.createTimer(5000);
 	 * // newTimer will be id of the timer
 	 */
-	public override async createTimer(length: number, createTimerOptions?: CreateTimerOptions<"PlainText">): Promise<string> {
+	public override async createTimer(options: CreateTimerOptions<"PlainText">): Promise<string> {
 		try {
-			if (createTimerOptions) {
+			if (options) {
 				await Log.ensureLogger();
 				if (Log.loggerInstance) {
 					Log.loggerInstance.warn(`Tips: If you select PlainText storage type, you don't have to set createTimerOptions.`);
 				}
 			}
-			if (length < 0) {
-				throw new Error(`Invailed length: ${length}`);
+			if (options.length < 0) {
+				throw new Error(`Invailed length: ${options.length}`);
 			}
 
 			const timersRaw = await fs.promises.readFile(this.timerfiledir, "utf-8");

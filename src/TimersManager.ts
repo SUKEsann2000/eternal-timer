@@ -56,7 +56,7 @@ export abstract class TimersManager<T extends StorageType> {
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-     public abstract createTimer(length:number, createTimerOptions: CreateTimerOptions<T>): Promise<string>;
+     public abstract createTimer(options: CreateTimerOptions<T>): Promise<string>;
 
 	/**
      * removeTimer
