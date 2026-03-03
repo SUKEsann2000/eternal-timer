@@ -56,7 +56,7 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 			const timersRaw = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			await this.checkTimerfileSyntax(timersRaw);
 
-			length = Math.trunc(length);
+			const length = Math.trunc(options);
 
 			// uuid, start, end
 			const id = uuidv4();
