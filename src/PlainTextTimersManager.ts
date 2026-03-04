@@ -32,6 +32,9 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 			if (timerArray[0]?.length !== 36) throwing();
 			if (timerArray[1]!.trim() === "") throwing();
 			if (timerArray[2]!.trim() === "") throwing();
+			if (isNaN(Number(timerArray[1]))) throwing();
+			if (isNaN(Number(timerArray[2]))) throwing();
+			if (Number(timerArray[1]) > Number(timerArray[2])) throwing();
 		}
 		return;
 	}
@@ -237,6 +240,9 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 				if (timerId === id) {
 					found = true;
 					const newStop = Number(stopStr!) + delay;
+					if (newStop < (Number(startStr))) {
+						throw new Error(`Timer with id ${id} has invalid time data`);
+					}
 					newTimersDataLines.push(`${timerId} ${startStr} ${newStop}`);
 				} else {
 					newTimersDataLines.push(line);

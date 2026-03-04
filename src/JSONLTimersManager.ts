@@ -33,6 +33,7 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 			if (!parsed.id || typeof parsed.id !== "string" || parsed.id.length !== 36) throwing();
 			if (!parsed.start || typeof parsed.start !== "number" || parsed.start.toString().trim() === "") throwing();
 			if (!parsed.stop || typeof parsed.stop !== "number" || parsed.stop.toString().trim() === "") throwing();
+			if (parsed.start > parsed.stop) throwing();
 			if (parsed.title && typeof parsed.title !== "string") throwing();
 			if (parsed.description && typeof parsed.description !== "string") throwing();
 		}
@@ -240,6 +241,9 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 					found = true;
 					timerData.stop += delay;
 					break;
+				}
+				if (timerData.start > timerData.stop) {
+					throw new Error(`Timer with id ${timerData.id} has invalid time data`);
 				}
 				newTimersData += `${JSON.stringify(timerData, null, 0)}\n`;
 			}
