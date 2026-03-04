@@ -106,7 +106,7 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 				const timerData: Timer<"JSONL"> = JSON.parse(line);
 				if (timerData.id === id) {
 					found = true;
-					continue;
+					break;
 				}
 				newTimersData += `${JSON.stringify(timerData, null, 0)}\n`;
 			}
@@ -219,6 +219,7 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 				if (timerData.id === id) {
 					found = true;
 					timerData.stop += delay;
+					break;
 				}
 				newTimersData += `${JSON.stringify(timerData, null, 0)}\n`;
 			}
