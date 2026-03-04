@@ -92,9 +92,6 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
      */
 	public override async removeTimer(id: string): Promise<void> {
 		try {
-			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
-			await this.checkTimerfileSyntax(timersRaw);
-
 			const rl = readline.createInterface({
 				input: fs.createReadStream(this.timerfiledir),
 				crlfDelay: Infinity,
@@ -105,6 +102,7 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 
 			for await (const line of rl) {
 				if (!line.trim()) continue;
+				await this.checkTimerfileSyntax(line);
 				const timerData: Timer<"JSONL"> = JSON.parse(line);
 				if (timerData.id === id) {
 					found = true;
