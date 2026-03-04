@@ -63,6 +63,13 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 			const now = Date.now();
 			const newTimerData = `${id} ${now.toString()} ${(now + length).toString()}`;
 			await fs.promises.appendFile(this.timerfiledir, newTimerData + "\n");
+			if (!this.disableCache) {
+				this.cachedTimers.push({
+					id,
+					start: now,
+					stop: (now + length),
+				});
+			}
 			return id;
 		} catch (e) {
 			throw new Error(`Error when creating timer: ${e}`);
@@ -80,9 +87,6 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 	 */
 	public override async removeTimer(id: string): Promise<void> {
 		try {
-			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
-			await this.checkTimerfileSyntax(timersRaw);
-			
 			const rl = readline.createInterface({
 				input: fs.createReadStream(this.timerfiledir),
 				crlfDelay: Infinity,
@@ -102,6 +106,9 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 				throw new Error(`Timer with id ${id} not found`);
 			}
 			await fs.promises.writeFile(this.timerfiledir, newTimersDataLines.join("\n"), "utf-8");
+			if (!this.disableCache) {
+				this.cachedTimers = this.cachedTimers.filter(t => t.id !== id);
+			}
 			return;
 		} catch (e) {
 			throw new Error(`Error when removing timer: ${e}`);
@@ -127,23 +134,36 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 			this.checkLock = true;
 
 			try {
-				const rl = readline.createInterface({
-					input: fs.createReadStream(this.timerfiledir),
-					crlfDelay: Infinity,
-				});
+				if (this.disableCache) {
+					const rl = readline.createInterface({
+						input: fs.createReadStream(this.timerfiledir),
+						crlfDelay: Infinity,
+					});
 
-				for await (const line of rl) {
-					if (!line.trim()) continue;
-					const [id, startStr, stopStr] = line.split(" ");
-					const timer: Timer<"PlainText"> = {
-						id: id!,
-						start: Number(startStr!),
-						stop: Number(stopStr!),
-					};
-					const now = Date.now();
-					if (Number(timer.stop) <= now) {
-						await this.removeTimer(timer.id);
-						callback(timer).catch(async (e) => {
+					for await (const line of rl) {
+						if (!line.trim()) continue;
+						const [id, startStr, stopStr] = line.split(" ");
+						const timer: Timer<"PlainText"> = {
+							id: id!,
+							start: Number(startStr!),
+							stop: Number(stopStr!),
+						};
+						const now = Date.now();
+						if (Number(timer.stop) <= now) {
+							await this.removeTimer(timer.id);
+							callback(timer).catch(async (e) => {
+								await Log.ensureLogger();
+								if (Log.loggerInstance) {
+									Log.loggerInstance.error(`Error in timer callback: ${e}`);
+								}
+							});
+						}
+					}
+				} else {
+					const expired = this.cachedTimers.filter(t => t.stop <= Date.now());
+					for (const timerData of expired) {
+						await this.removeTimer(timerData.id);
+						callback(timerData).catch(async (e) => {
 							await Log.ensureLogger();
 							if (Log.loggerInstance) {
 								Log.loggerInstance.error(`Error in timer callback: ${e}`);
@@ -173,6 +193,9 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 	 */
 	public override async showTimers(): Promise<Timer<"PlainText">[]> {
 		try {
+			if (!this.disableCache) {
+				return this.cachedTimers;
+			}
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			const timersData: string[] = timersRaw.split(/\r?\n/);
 
@@ -223,6 +246,9 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 				throw new Error(`Timer with id ${id} not found`);
 			}
 			await fs.promises.writeFile(this.timerfiledir, newTimersDataLines.join("\n"), "utf-8");
+			if (!this.disableCache) {
+				this.cachedTimers = this.cachedTimers.map(t => t.id === id ? { ...t, stop: t.stop + delay } : t);
+			}
 			return;
 		} catch (e) {
 			throw new Error(`Error when adjusting remaining time: ${e}`);
