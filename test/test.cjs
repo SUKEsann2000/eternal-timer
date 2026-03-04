@@ -46,12 +46,13 @@ async function cjs_test() {
 		}
 	};
 
+	let result = true;
 	console.log("=== COMMONJS_TEST ===");
-	await runTest(true);
+	result = await runTest(true);
 	console.log();
-	await runTest(false);
+	result = await runTest(false);
 	console.log("=== COMMONJS_TEST END ===");
-	return true;
+	return result;
 }
 
 module.exports = {

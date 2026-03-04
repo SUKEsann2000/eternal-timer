@@ -46,11 +46,12 @@ export async function module_test() {
 		}
 	};
 
+	let result = true;
 	console.log("=== MODULE_TEST ===");
-	await runTest(true);
+	result = await runTest(true);
 	console.log();
-	await runTest(false);
+	result = await runTest(false);
 	console.log("=== MODULE_TEST END ===");
-	return true;
+	return result;
 }
 
