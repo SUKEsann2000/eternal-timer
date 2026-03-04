@@ -193,4 +193,45 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 			throw new Error(`Error when showing timers: ${e}`);
 		}
 	}
+
+	/**
+	 * adjustRemainingTime
+	 * @description Adjusts the remaining time of a timer.
+	 * @param id ID of the timer to modify
+	 * @param delay Delay in milliseconds to add/subtract from the remaining time
+	 * @returns Promise resolving when the operation is complete
+	 * @throws If file operation fails
+	*/
+	public override async adjustRemainingTime(id: string, delay: number): Promise<void> {
+		try {
+			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
+			await this.checkTimerfileSyntax(timersRaw);
+
+			const rl = readline.createInterface({
+				input: fs.createReadStream(this.timerfiledir),
+				crlfDelay: Infinity,
+			});
+
+			let newTimersData: string = "";
+			let found = false;
+
+			for await (const line of rl) {
+				if (!line.trim()) continue;
+				const timerData: Timer<"JSONL"> = JSON.parse(line);
+				if (timerData.id === id) {
+					found = true;
+					timerData.stop += delay;
+				}
+				newTimersData += `${JSON.stringify(timerData, null, 0)}\n`;
+			}
+			if (!found) {
+				throw new Error(`Timer with id ${id} not found`);
+			}
+
+			await fs.promises.writeFile(this.timerfiledir, newTimersData, "utf-8");
+			return;
+		} catch (e) {
+			throw new Error(`Error when adjusting remaining time: ${e}`);
+		}
+	}
 }

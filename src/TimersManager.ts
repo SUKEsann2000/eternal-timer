@@ -93,4 +93,14 @@ export abstract class TimersManager<T extends StorageType> {
      * console.log(JSON.stringify(timers))
      */
 	public abstract showTimers(): Promise<Timer<T>[]>;
+
+     /**
+      * adjustRemainingTime
+      * @description Adjusts the remaining time of a timer.
+      * @param id ID of the timer to modify
+      * @param delay Delay in milliseconds to add/subtract from the remaining time
+      * @returns Promise resolving when the operation is complete
+      * @throws If file operation fails
+      */
+     public abstract adjustRemainingTime(id: string, delay: number): Promise<void>;
 }

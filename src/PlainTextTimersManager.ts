@@ -191,4 +191,41 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 			throw new Error(`Error when showing timers: ${e}`);
 		}
 	}
+
+	/**
+	 * adjustRemainingTime
+	 * @description Adjusts the remaining time of a timer.
+	 * @param id ID of the timer to modify
+	 * @param delay Delay in milliseconds to add/subtract from the remaining time
+	 * @returns Promise resolving when the operation is complete
+	 * @throws If file operation fails
+	*/
+	public override async adjustRemainingTime(id: string, delay: number): Promise<void> {
+		try {
+			const rl = readline.createInterface({
+				input: fs.createReadStream(this.timerfiledir),
+				crlfDelay: Infinity,
+			});
+			const newTimersDataLines: string[] = [];
+			let found = false;
+			for await (const line of rl) {
+				if (!line.trim()) continue;
+				const [timerId, startStr, stopStr] = line.split(" ");
+				if (timerId === id) {
+					found = true;
+					const newStop = Number(stopStr!) + delay;
+					newTimersDataLines.push(`${timerId} ${startStr} ${newStop}`);
+				} else {
+					newTimersDataLines.push(line);
+				}
+			}
+			if (!found) {
+				throw new Error(`Timer with id ${id} not found`);
+			}
+			await fs.promises.writeFile(this.timerfiledir, newTimersDataLines.join("\n"), "utf-8");
+			return;
+		} catch (e) {
+			throw new Error(`Error when adjusting remaining time: ${e}`);
+		}
+	}
 }
