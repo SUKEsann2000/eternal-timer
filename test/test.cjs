@@ -44,6 +44,8 @@ async function cjs_test() {
 			console.log("❌ Delete Timer failed");
 			return false;
 		}
+
+		return true;
 	};
 
 	let result = true;
