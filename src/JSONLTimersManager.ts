@@ -163,7 +163,7 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 			} catch (e) {
 				await Log.ensureLogger();
 				if (Log.loggerInstance) {
-					Log.loggerInstance.error(`Error when checking alarm: ${e}`);
+					Log.loggerInstance.error(`Error when checking timer: ${e}`);
 				}
 			} finally {
 				this.checkLock = false;
