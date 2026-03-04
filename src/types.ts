@@ -15,3 +15,8 @@ export type CreateTimerOptions<T extends StorageType> = T extends "JSONL"
     : T extends "PlainText"
       ? number
       : never;
+
+export type TimersManagerOptions = {
+    timerfiledir?: string;
+    disableCache?: boolean;
+} | string;

@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import searchRoot from "./searchRoot.js";
-import type { CreateTimerOptions, StorageType, Timer } from "./types.js";
+import type { CreateTimerOptions, StorageType, Timer, TimersManagerOptions } from "./types.js";
 
 /**
  * TimersManager
@@ -16,19 +16,32 @@ export abstract class TimersManager<T extends StorageType> {
 	protected readonly timerfiledir: string;
 	protected checkLock: boolean = false;
 
+     protected readonly disableCache: boolean;
+     protected cachedTimers: Timer<T>[] = [];
+
 	protected abstract getDefaultFilename(): string;
 
-	/**
-     * constructor
-     * @param timerfiledir(string, optional)
-     * If omitted, `.timers.jsonl` under the project root is used.
-     */
+     /**
+      * constructor
+      * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created. Cache is enabled by default.
+      * @param options (TimersManagerOptions | string, optional) Configuration object or timer file path. If a string is provided, it is treated as the timer file path. If an object is provided, `timerfiledir` and `disableCache` can be specified.
+      * @throws If file access or creation fails
+      * @example
+      * const manager = new TimersManager(); // Uses default timer file path (cache enabled)
+      * const managerWithPath = new TimersManager("/path/to/timers.txt"); // Uses specified timer file path
+      * const managerNoCache = new TimersManager({ disableCache: true }); // Disables cache
+      */
 	constructor(
-		timerfiledir?: string,
+          options?: TimersManagerOptions,
 	) {
-		this.timerfiledir =
-            timerfiledir ?? path.join(searchRoot(), this.getDefaultFilename());
-
+          if (typeof options === "string") {
+               this.timerfiledir = path.resolve(options);
+               this.disableCache = false;
+          } else {
+               const timerfiledir = options?.timerfiledir ? path.resolve(options.timerfiledir) : path.join(searchRoot(), this.getDefaultFilename());
+               this.timerfiledir = timerfiledir;
+               this.disableCache = options?.disableCache ?? false;
+          }
 		try {
 			fs.accessSync(this.timerfiledir);
 		} catch {

@@ -67,14 +67,17 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 			// uuid, start, end
 			const id = uuidv4();
 			const now = Date.now();
-			const newTimerData: string = JSON.stringify({
+			const newTimerData: Timer<"JSONL"> = {
 				id,
 				start: now,
 				stop: (now + length),
 				...(typeof options === "object" && options.title !== undefined && { title: options.title }),
 				...(typeof options === "object" && options.description !== undefined && { description: options.description }),
-			});
-			await fs.promises.appendFile(this.timerfiledir, newTimerData + "\n");
+			};
+			await fs.promises.appendFile(this.timerfiledir, JSON.stringify(newTimerData) + "\n");
+			if (!this.disableCache) {
+				this.cachedTimers.push(newTimerData);
+			}
 			return id;
 		} catch (e) {
 			throw new Error(`Error when creating timer: ${e}`);
@@ -115,6 +118,9 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 			}
 
 			await fs.promises.writeFile(this.timerfiledir, newTimersData, "utf-8");
+			if (!this.disableCache) {
+				this.cachedTimers = this.cachedTimers.filter(t => t.id !== id);
+			}
 			return;
 		} catch (e) {
 			throw new Error(`Error when removing timer: ${e}`);
@@ -139,16 +145,29 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 			this.checkLock = true;
 
 			try {
-				const rl = readline.createInterface({
-					input: fs.createReadStream(this.timerfiledir),
-					crlfDelay: Infinity,
-				});
+				if (this.disableCache) {
+						const rl = readline.createInterface({
+							input: fs.createReadStream(this.timerfiledir),
+							crlfDelay: Infinity,
+						});
 
-				for await (const line of rl) {
-					if (!line.trim()) continue;
-					const timerData: Timer<"JSONL"> = JSON.parse(line);
-					const now = Date.now();
-					if (Number(timerData.stop) <= now) {
+						for await (const line of rl) {
+							if (!line.trim()) continue;
+							const timerData: Timer<"JSONL"> = JSON.parse(line);
+							const now = Date.now();
+							if (Number(timerData.stop) <= now) {
+								await this.removeTimer(timerData.id);
+								callback(timerData).catch(async (e) => {
+									await Log.ensureLogger();
+									if (Log.loggerInstance) {
+										Log.loggerInstance.error(`Error in callback of checkTimers: ${e}`);
+									}
+								});
+							}
+						}
+				} else {
+					const expired = this.cachedTimers.filter(t => t.stop <= Date.now());
+					for (const timerData of expired) {
 						await this.removeTimer(timerData.id);
 						callback(timerData).catch(async (e) => {
 							await Log.ensureLogger();
@@ -180,6 +199,9 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
      */
 	public override async showTimers(): Promise<Timer<"JSONL">[]> {
 		try {
+			if (!this.disableCache) {
+				return this.cachedTimers;
+			}
 			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
 			const timersData: Timer<"JSONL">[] = timersRaw
 				.split(/\r?\n/)
@@ -202,9 +224,6 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 	*/
 	public override async adjustRemainingTime(id: string, delay: number): Promise<void> {
 		try {
-			const timersRaw: string = await fs.promises.readFile(this.timerfiledir, "utf-8");
-			await this.checkTimerfileSyntax(timersRaw);
-
 			const rl = readline.createInterface({
 				input: fs.createReadStream(this.timerfiledir),
 				crlfDelay: Infinity,
@@ -216,6 +235,7 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 			for await (const line of rl) {
 				if (!line.trim()) continue;
 				const timerData: Timer<"JSONL"> = JSON.parse(line);
+				await this.checkTimerfileSyntax(line);
 				if (timerData.id === id) {
 					found = true;
 					timerData.stop += delay;
@@ -228,6 +248,9 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 			}
 
 			await fs.promises.writeFile(this.timerfiledir, newTimersData, "utf-8");
+			if (!this.disableCache) {
+				this.cachedTimers = this.cachedTimers.map(t => t.id === id ? { ...t, stop: t.stop + delay } : t);
+			}
 			return;
 		} catch (e) {
 			throw new Error(`Error when adjusting remaining time: ${e}`);
