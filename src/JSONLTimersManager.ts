@@ -96,6 +96,17 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
      */
 	public override async removeTimer(id: string): Promise<void> {
 		try {
+				const index = this.cachedTimers.findIndex(t => t.id === id);
+				if (index === -1) throw new Error(`Timer with id ${id} not found`);
+
+				this.cachedTimers.splice(index, 1);
+
+				await fs.promises.writeFile(
+					this.timerfiledir,
+					this.cachedTimers.map(t => JSON.stringify(t)).join("\n") + "\n"
+				);
+				return;
+			}
 			const rl = readline.createInterface({
 				input: fs.createReadStream(this.timerfiledir),
 				crlfDelay: Infinity,
