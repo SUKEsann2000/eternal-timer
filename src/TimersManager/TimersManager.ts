@@ -1,7 +1,8 @@
 import path from "path";
 import fs from "fs";
-import searchRoot from "./searchRoot.js";
-import type { CreateTimerOptions, StorageType, Timer, TimersManagerOptions } from "./types.js";
+import searchRoot from "../searchRoot.js";
+import type { CreateTimerOptions, StorageType, Timer, TimersManagerOptions } from "../types.js";
+import { TimersStore } from "../TimersStore/TimersStore.js";
 
 /**
  * TimersManager
@@ -16,12 +17,12 @@ export abstract class TimersManager<T extends StorageType> {
 	protected readonly timerfiledir: string;
 	protected checkLock: boolean = false;
 
-     protected readonly disableCache: boolean;
-     protected cachedTimers: Timer<T>[] = [];
+	protected disableCache: boolean = false;
+	protected TimersStore: TimersStore<T> | null = null;
 
 	protected abstract getDefaultFilename(): string;
 
-     /**
+	/**
       * constructor
       * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created. Cache is enabled by default.
       * @param options (TimersManagerOptions | string, optional) Configuration object or timer file path. If a string is provided, it is treated as the timer file path. If an object is provided, `timerfiledir` and `disableCache` can be specified.
@@ -32,31 +33,28 @@ export abstract class TimersManager<T extends StorageType> {
       * const managerNoCache = new TimersManager({ disableCache: true }); // Disables cache
       */
 	constructor(
-          options?: TimersManagerOptions,
+		options?: TimersManagerOptions,
 	) {
-          if (typeof options === "string") {
-               this.timerfiledir = path.resolve(options);
-               this.disableCache = false;
-          } else {
-               const timerfiledir = options?.timerfiledir ? path.resolve(options.timerfiledir) : path.join(searchRoot(), this.getDefaultFilename());
-               this.timerfiledir = timerfiledir;
-               this.disableCache = options?.disableCache ?? false;
-          }
+		const rootDir = searchRoot();
+		if (typeof options === "string") {
+			this.timerfiledir = path.resolve(rootDir, options);
+			if (!this.timerfiledir.startsWith(rootDir)) {
+				throw new Error(`Timer file path must be within the project directory`);
+			}
+		} else {
+			const timerfiledir = options?.timerfiledir ? path.resolve(rootDir, options.timerfiledir) : path.join(rootDir, this.getDefaultFilename());
+			this.timerfiledir = timerfiledir;
+			if (!this.timerfiledir.startsWith(rootDir)) {
+				throw new Error(`Timer file path must be within the project directory`);
+			}
+			this.disableCache = options?.disableCache ?? false;
+		}
 		try {
 			fs.accessSync(this.timerfiledir);
 		} catch {
 			fs.writeFileSync(this.timerfiledir, "");
 		}
 	}
-
-	/**
-	 * checkTimerfileSyntax
-	 * @description Checks the syntax of the timer file.
-	 * @param fileData 
-	 * @returns void
-	 * @throws If syntax is invalid
-	 */
-	protected abstract checkTimerfileSyntax(fileData: string): Promise<void>;
 
 	/**
      * createTimer
@@ -94,7 +92,7 @@ export abstract class TimersManager<T extends StorageType> {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-     public abstract checkTimers(callback: (timer: Timer<T>) => Promise<void>, interval?: number): NodeJS.Timeout;
+     public abstract checkTimers(callback: (timer: Timer<T>) => Promise<void>, interval?: number): Promise<NodeJS.Timeout>;
 
 	/**
      * showTimers

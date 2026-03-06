@@ -48,13 +48,17 @@ async function cjs_test() {
 		return true;
 	};
 
-	let result = true;
+	let overallResult = true;
 	console.log("=== COMMONJS_TEST ===");
-	result = await runTest(true);
+	if (!(await runTest(true))) {
+		overallResult = false;
+	}
 	console.log();
-	result = await runTest(false);
+	if (!(await runTest(false))) {
+		overallResult = false;
+	}
 	console.log("=== COMMONJS_TEST END ===");
-	return result;
+	return overallResult;
 }
 
 module.exports = {

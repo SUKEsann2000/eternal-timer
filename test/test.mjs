@@ -26,7 +26,6 @@ export async function module_test() {
 		await new Promise(resolve => setTimeout(resolve, 2000));
 		clearInterval(interval);
 
-		console.log(finishedTimers);
 		if (finishedTimers.includes(timer1) && finishedTimers.includes(timer2) && finishedTimers.length === 2) {
 			console.log("✅ Callback of Timer OK");
 		} else {
@@ -49,12 +48,16 @@ export async function module_test() {
 		return true;
 	};
 
-	let result = true;
+	let overallResult = true;
 	console.log("=== MODULE_TEST ===");
-	result = await runTest(true);
+	if (!(await runTest(true))) {
+		overallResult = false;
+	}
 	console.log();
-	result = await runTest(false);
+	if (!(await runTest(false))) {
+		overallResult = false;
+	}
 	console.log("=== MODULE_TEST END ===");
-	return result;
+	return overallResult;
 }
 
