@@ -35,6 +35,8 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
      * // newTimer will be id of the timer
      */
 	public override async createTimer(options: CreateTimerOptions<"JSONL">): Promise<string> {
+		await this.ensureOperationLock(); // Acquire operation lock
+		this.operationLock = true;
 		try {
 			this.TimersStore = this.TimersStore !== null ? this.TimersStore : await JSONLTimersStore.create(this.disableCache, this.timerfiledir);
 			let length = typeof options === "object" ? options.length : options;
@@ -58,6 +60,8 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 			return id;
 		} catch (e) {
 			throw new Error(`Error when creating timer: ${e}`);
+		} finally {
+			this.operationLock = false; // Release operation lock
 		}
 	}
 
@@ -71,20 +75,24 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
      * await manager.removeTimer(id);
      */
 	public override async removeTimer(id: string): Promise<void> {
+		await this.ensureOperationLock(); // Acquire operation lock
+		this.operationLock = true;
 		try {
 			this.TimersStore = this.TimersStore !== null ? this.TimersStore : await JSONLTimersStore.create(this.disableCache, this.timerfiledir);
 			const timers = await this.TimersStore.loadTimers();
-			
+				
 			const index = timers.findIndex(t => t.id === id);
 			if (index === -1) {
 				throw new Error(`Timer with id ${id} not found`);
 			}
-
+	
 			timers.splice(index, 1);
 			await this.TimersStore.saveTimers(timers);
 			return;
 		} catch (e) {
 			throw new Error(`Error when removing timer: ${e}`);
+		} finally {
+			this.operationLock = false; // Release operation lock
 		}
 	}
 
@@ -108,13 +116,29 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 			if (this.checkLock) return;
 			this.checkLock = true;
 
+			await this.ensureOperationLock(); // Acquire operation lock
+			this.operationLock = true;
 			try {
 				const now = Date.now();
-				const expired: Timer<"JSONL">[] = await this.TimersStore!.loadTimers().then(timers => timers.filter(timer => timer.stop <= now));
+				const allTimers = await this.TimersStore!.loadTimers();
+				const activeTimers: Timer<"JSONL">[] = [];
+				const expiredTimers: Timer<"JSONL">[] = [];
 
-				await Promise.all(expired.map(async timerData => {
+				for (const timer of allTimers) {
+					if (timer.stop <= now) {
+						expiredTimers.push(timer);
+					} else {
+						activeTimers.push(timer);
+					}
+				}
+
+				// Save only the active timers back to the store
+				await this.TimersStore!.saveTimers(activeTimers);
+
+				// Now, execute callbacks for expired timers
+				await Promise.all(expiredTimers.map(async timerData => {
 					try {
-						await this.removeTimer(timerData.id);
+						// The timer has already been removed from storage
 						await callback(timerData);
 					} catch (e) {
 						await Log.ensureLogger();
@@ -125,11 +149,12 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 				await Log.ensureLogger();
 				Log.loggerInstance?.error(`Error when checking timer: ${e}`);
 			} finally {
+				this.operationLock = false; // Release operation lock
 				this.checkLock = false;
 				timeout = setTimeout(loop, interval);
 				return;
 			}
-		}
+		};
 
 		timeout = setTimeout(loop, interval);
 		return timeout;
@@ -163,6 +188,8 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 	 * @throws If file operation fails
 	*/
 	public override async adjustRemainingTime(id: string, delay: number): Promise<void> {
+		await this.ensureOperationLock(); // Acquire operation lock
+		this.operationLock = true;
 		try {
 			this.TimersStore = this.TimersStore !== null ? this.TimersStore : await JSONLTimersStore.create(this.disableCache, this.timerfiledir);
 			const timers = await this.TimersStore.loadTimers();
@@ -186,6 +213,8 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 			return;
 		} catch (e) {
 			throw new Error(`Error when adjusting remaining time: ${e}`);
+		} finally {
+			this.operationLock = false; // Release operation lock
 		}
 	}
 }

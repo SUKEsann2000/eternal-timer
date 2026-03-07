@@ -63,31 +63,22 @@ export class JSONLTimersStore extends TimersStore<"JSONL"> {
 				.filter((line) => line.trim())
 				.map((line) => JSON.parse(line) as Timer<"JSONL">);
 			await this.checkTimerfileSyntax(timersData);
+			if (!this.disableCache) {
+				this.timers = timersData;
+			}
 			return timersData;
 		} catch (e) {
 			throw new Error(`Error when loading timer data: ${e}`);
+		} finally {
+			this.fileLock = false;
 		}
 	}
 
 	public override async saveTimers(timers: Timer<"JSONL">[]): Promise<void> {
-
 		const data = this.toStringifyTimers(timers);
 
 		if (!this.disableCache) {
 			this.timers = timers;
-
-			if (this.fileLock) {
-				await this.ensureFileLock();
-			}
-			this.fileLock = true;
-			fs.promises.writeFile(this.timerfile, data, "utf-8")
-				.catch(async (e) => {
-					await Log.ensureLogger();
-					Log.loggerInstance?.error(`Error when saving timer data: ${e}`);
-				}).finally(() => {
-					this.fileLock = false;
-				});
-			return;
 		}
 
 		try {
@@ -105,35 +96,29 @@ export class JSONLTimersStore extends TimersStore<"JSONL"> {
 
 	public override async appendTimer(timer: Timer<"JSONL">): Promise<void> {
 		try {
-			if (!this.disableCache) {
-				this.timers.push(timer);
-
-				if (this.fileLock) {
-					await this.ensureFileLock();
-				}
-				this.fileLock = true;
-				fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n", "utf-8")
-					.catch(async (e) => {
-						throw new Error(`Error when appending timer data: ${e}`);
-					}).finally(() => {
-						this.fileLock = false;
-					});
-				return;
-			}
-
+			const line = this.toStringifyTimers([timer]);
 			if (this.fileLock) {
 				await this.ensureFileLock();
 			}
+			if (!this.disableCache) {
+				this.timers.push(timer);
+			}
+
 			this.fileLock = true;
-			await fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n", "utf-8");
+			await fs.promises.appendFile(this.timerfile, line, "utf-8");
+			this.fileLock = false;
 		} catch (e) {
-			throw new Error(`Error when appending timer data: ${e}`);
+			await Log.ensureLogger();
+			Log.loggerInstance?.error(`Error when appending timer data: ${e}`);
 		} finally {
 			this.fileLock = false;
 		}
 	}
 
 	public override toStringifyTimers(timers: Timer<"JSONL">[]): string {
-		return timers.map(t => JSON.stringify(t)).join("\n");
+		if (timers.length === 0) {
+			return "";
+		}
+		return timers.map(t => JSON.stringify(t)).join("\n") + "\n";
 	}
 }

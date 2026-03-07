@@ -24,7 +24,7 @@ async function cjs_test() {
 			finishedTimers.push(timer.id);
 		});
 		await new Promise(resolve => setTimeout(resolve, 2000));
-		clearInterval(interval);
+		clearTimeout(interval);
 	
 		if (finishedTimers.includes(timer1) && finishedTimers.includes(timer2) && finishedTimers.length === 2) {
 			console.log("✅ Callback of Timer OK");
@@ -37,11 +37,29 @@ async function cjs_test() {
 	
 		await manager.removeTimer(timer3);
 		const timersAfterRemove = await manager.showTimers();
-	
 		if (timersAfterRemove.length === 0) {
 			console.log("✅ Remove Timer OK");
 		} else {
 			console.log("❌ Delete Timer failed");
+			return false;
+		}
+
+		const timer4 = await manager.createTimer(10000);
+		await manager.adjustRemainingTime(timer4, -9500);
+
+		let adjustedTimerFinished = false;
+		const adjustInterval = manager.checkTimers(async (timer) => {
+			if (timer.id === timer4) {
+				adjustedTimerFinished = true;
+			}
+		});
+		await new Promise(resolve => setTimeout(resolve, 1000))
+		clearTimeout(adjustInterval);
+
+		if (adjustedTimerFinished) {
+			console.log("✅ Adjust Remaining Time OK");
+		} else {
+			console.log("❌ Adjust Remaining Time Failed");
 			return false;
 		}
 

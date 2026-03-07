@@ -16,6 +16,20 @@ import { TimersStore } from "../TimersStore/TimersStore.js";
 export abstract class TimersManager<T extends StorageType> {
 	protected readonly timerfiledir: string;
 	protected checkLock: boolean = false;
+	/**
+	 * operationLock
+	 * @description This boolean flag acts as a higher-level, in-process mutual exclusion lock
+	 * within the `TimersManager` to ensure atomicity of complex "read-modify-write" operations
+	 * (e.g., `removeTimer`, `adjustRemainingTime`) that involve multiple calls to `TimersStore`
+	 * (like `loadTimers` followed by `saveTimers`).
+	 * It prevents race conditions when these operations are executed concurrently, for example,
+	 * when `checkTimers` processes multiple expired timers in parallel.
+	 * IMPORTANT: This lock mechanism only provides mutual exclusion within a single
+	 * process/instance of the application. It does NOT protect against concurrent
+	 * access from multiple different processes, multiple instances of the application,
+	 * or external programs modifying the timer file.
+	 */
+	protected operationLock: boolean = false;
 
 	protected disableCache: boolean = false;
 	protected TimersStore: TimersStore<T> | null = null;
@@ -54,6 +68,26 @@ export abstract class TimersManager<T extends StorageType> {
 		} catch {
 			fs.writeFileSync(this.timerfiledir, "");
 		}
+	}
+
+	/**
+	 * ensureOperationLock
+	 * @description Ensures that only one "read-modify-write" operation is performed at a time.
+	 * This method will pause execution until `operationLock` is false, then acquire it.
+	 * The lock must be explicitly released by setting `operationLock = false` in a `finally` block
+	 * after the protected operation completes.
+	 */
+	protected ensureOperationLock(): Promise<void> {
+		return new Promise((resolve) => {
+			const checkLock = () => {
+				if (!this.operationLock) {
+					resolve();
+				} else {
+					setTimeout(checkLock, 50);
+				}
+			};
+			checkLock();
+		});
 	}
 
 	/**

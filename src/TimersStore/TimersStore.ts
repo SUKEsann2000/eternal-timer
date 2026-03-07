@@ -35,7 +35,7 @@ export abstract class TimersStore<T extends StorageType> {
 	protected async init(): Promise<void> {
 		if (this.disableCache) return;
 
-		this.timers = await this.loadTimers();
+		await this.loadTimers();
 		this.initialized = true;
 	}
 
@@ -44,16 +44,16 @@ export abstract class TimersStore<T extends StorageType> {
     public abstract saveTimers(timers: Timer<T>[]): Promise<void>;
     public abstract appendTimer(timer: Timer<T>): Promise<void>;
     public abstract toStringifyTimers(timers: Timer<T>[]): string;
-	protected ensureFileLock(): Promise<void> {
-		return new Promise((resolve) => {
-			const checkLock = () => {
-				if (!this.fileLock) {
-					resolve();
-				} else {
-					setTimeout(checkLock, 50);
-				}
-			};
-			checkLock();
-		});
-	}
+    protected ensureFileLock(): Promise<void> {
+    	return new Promise((resolve) => {
+    		const checkLock = () => {
+    			if (!this.fileLock) {
+    				resolve();
+    			} else {
+    				setTimeout(checkLock, 50);
+    			}
+    		};
+    		checkLock();
+    	});
+    }
 }

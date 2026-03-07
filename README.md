@@ -148,7 +148,7 @@ Removes a timer by its ID.
 
 Starts monitoring for expired timers at a specified interval. This function runs asynchronously and will not block execution.
 
-When an expired timer is found, the provided `callback` function is invoked with the `timer` object. The function waits for the `callback`'s `Promise` to resolve before proceeding to the next check, preventing race conditions. Error handling has been added within the `callback` to prevent the application from crashing if an error occurs during timer processing.
+When an expired timer is found, the provided `callback` function is invoked with the `timer` object. The entire process of checking for, and removing, expired timers is now atomic, preventing race conditions with other timer modification operations. The function waits for the `callback`'s `Promise` to resolve before proceeding to the next check. Error handling is within the `callback` to prevent the application from crashing if an error occurs during timer processing.
 
 - **`callback`**: An async function that is called with the expired `timer` object.
 - **`interval`** (optional, number): The interval in milliseconds to check for expired timers. Defaults to `200ms`.
@@ -164,6 +164,17 @@ Retrieves all active timers.
 **Returns:** A `Promise` that resolves to an array of `Timer` objects.
 
 **Throws:** An error if a file operation fails.
+
+### `adjustRemainingTime(id: string, delay: number): Promise<void>`
+
+Adjusts the remaining time of a specified timer. This can be used to extend or shorten a timer's duration.
+
+- **`id`**: The ID of the timer to modify.
+- **`delay`**: The amount of time in milliseconds to add to (if positive) or subtract from (if negative) the timer's remaining duration.
+
+**Returns:** A `Promise<void>` that resolves when the timer's remaining time has been adjusted.
+
+**Throws:** An error if: the timer with the specified ID is not found, the resulting remaining time would be negative, or a file operation fails.
 
 ## Type Definition
 

@@ -74,6 +74,8 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 			return timersData;
 		} catch (e) {
 			throw new Error(`Error when loading timer data: ${e}`);
+		} finally {
+			this.fileLock = false;
 		}
 	}
 
@@ -82,27 +84,15 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 
 		if (!this.disableCache) {
 			this.timers = timers;
-
-			if (this.fileLock) {
-				await this.ensureFileLock();
-			}
-			this.fileLock = true;
-			fs.promises.writeFile(this.timerfile, data, "utf8")
-				.catch(async (e) => {
-					await Log.ensureLogger();
-					Log.loggerInstance?.error(`Error when saving timer data: ${e}`);
-				}).finally(() => {
-					this.fileLock = false;
-				});
-
-			return;
 		}
+
 		try {
 			if (this.fileLock) {
 				await this.ensureFileLock();
 			}
 			this.fileLock = true;
 			await fs.promises.writeFile(this.timerfile, data, "utf8");
+			this.fileLock = false;
 		} catch (e) {
 			throw new Error(`Error when saving timer data: ${e}`);
 		} finally {
@@ -114,19 +104,6 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 		try {
 			if (!this.disableCache) {
 				this.timers.push(timer);
-
-				if (this.fileLock) {
-					await this.ensureFileLock();
-				}
-				this.fileLock = true;
-				fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n", "utf-8")
-					.catch(async (e) => {
-						await Log.ensureLogger();
-						Log.loggerInstance?.error(`Error when appending timer data: ${e}`);
-					}).finally(() => {
-						this.fileLock = false;
-					});
-				return;
 			}
 
 			if (this.fileLock) {
@@ -134,14 +111,20 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 			}
 			this.fileLock = true;
 			await fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
+			this.fileLock = false;
+			return;
 		} catch (e) {
-			throw new Error(`Error when appending timer data: ${e}`);
+			await Log.ensureLogger();
+			Log.loggerInstance?.error(`Error when appending timer data: ${e}`);
 		} finally {
 			this.fileLock = false;
 		}
 	}
 
 	public override toStringifyTimers(timers: Timer<"PlainText">[]): string {
-		return timers.map(timer => `${timer.id} ${timer.start} ${timer.stop}`).join("\n");
+		if (timers.length === 0) {
+			return "";
+		}
+		return timers.map(timer => `${timer.id} ${timer.start} ${timer.stop}`).join("\n") + "\n";
 	}
 }
