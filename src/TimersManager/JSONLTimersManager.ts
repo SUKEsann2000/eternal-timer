@@ -103,7 +103,8 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 	public override async checkTimers(callback: (timer: Timer<"JSONL">) => Promise<void>, interval: number = 200): Promise<NodeJS.Timeout> {
 		this.TimersStore = this.TimersStore !== null ? this.TimersStore : await JSONLTimersStore.create(this.disableCache, this.timerfiledir);
 
-		return setInterval(async () => {
+		let timeout: NodeJS.Timeout | null = null;
+		const loop = async () => {
 			if (this.checkLock) return;
 			this.checkLock = true;
 
@@ -111,7 +112,7 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 				const now = Date.now();
 				const expired: Timer<"JSONL">[] = await this.TimersStore!.loadTimers().then(timers => timers.filter(timer => timer.stop <= now));
 
-				for (const timerData of expired) {
+				await Promise.all(expired.map(async timerData => {
 					try {
 						await this.removeTimer(timerData.id);
 						await callback(timerData);
@@ -119,14 +120,19 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 						await Log.ensureLogger();
 						Log.loggerInstance?.error(`Error in callback of checkTimers: ${e}`);
 					}
-				}
+				}));
 			} catch (e) {
 				await Log.ensureLogger();
 				Log.loggerInstance?.error(`Error when checking timer: ${e}`);
 			} finally {
 				this.checkLock = false;
+				timeout = setTimeout(loop, interval);
+				return;
 			}
-		}, interval);
+		}
+
+		timeout = setTimeout(loop, interval);
+		return timeout;
 	}
 
 	/**

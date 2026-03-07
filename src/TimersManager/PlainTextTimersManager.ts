@@ -90,7 +90,8 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 	public override async checkTimers(callback: (timer: Timer<"PlainText">) => Promise<void>, interval: number = 200): Promise<NodeJS.Timeout> {
 		this.TimersStore = this.TimersStore !== null ? this.TimersStore : await PlainTextTimersStore.create(this.disableCache, this.timerfiledir);
 		
-		return setInterval(async () => {
+		let timeout: NodeJS.Timeout | null = null;
+		const loop = async () => {
 			if (this.checkLock) return;
 			this.checkLock = true;
 
@@ -98,7 +99,7 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 				const now = Date.now();
 				const expired: Timer<"PlainText">[] = await this.TimersStore!.loadTimers().then(timers => timers.filter(timer => timer.stop <= now));
 
-				for (const timerData of expired) {
+				await Promise.all(expired.map(async timerData => {
 					try {
 						await this.removeTimer(timerData.id);
 						await callback(timerData);
@@ -106,7 +107,7 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 						await Log.ensureLogger();
 						Log.loggerInstance?.error(`Error in callback of checkTimers: ${e}`);
 					}
-				}
+				}));
  			} catch (e) {
 				await Log.ensureLogger();
 				if (Log.loggerInstance) {
@@ -114,8 +115,13 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 				}
 			} finally {
 				this.checkLock = false;
+				timeout = setTimeout(loop, interval);
+				return;
 			}
-		}, interval);
+		};
+
+		timeout = setTimeout(loop, interval);
+		return timeout;
 	}
 
 	/**
