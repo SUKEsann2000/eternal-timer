@@ -45,6 +45,25 @@ export async function module_test() {
 			return false;
 		}
 
+		const timer4 = await manager.createTimer(10000);
+		await manager.adjustRemainingTime(timer4, -9500);
+
+		let adjustedTimerFinished = false;
+		const adjustInterval = manager.checkTimers(async (timer) => {
+			if (timer.id === timer4) {
+				adjustedTimerFinished = true;
+			}
+		});
+		await new Promise(resolve => setTimeout(resolve, 1000))
+		clearTimeout(adjustInterval);
+
+		if (adjustedTimerFinished) {
+			console.log("✅ Adjust Remaining Time OK");
+		} else {
+			console.log("❌ Adjust Remaining Time Failed");
+			return false;
+		}
+
 		return true;
 	};
 
