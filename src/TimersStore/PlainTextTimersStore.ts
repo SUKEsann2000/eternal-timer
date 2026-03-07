@@ -2,6 +2,7 @@ import fs from "fs";
 
 import type { Timer } from "../types.js";
 import { TimersStore } from "./TimersStore.js";
+import { Log } from "../Log.js";
 
 export class PlainTextTimersStore extends TimersStore<"PlainText"> {
     
@@ -51,7 +52,13 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 			if (!this.disableCache && this.initialized) {
 				return this.timers;
 			}
+
+			if (this.fileLock) {
+				await this.ensureFileLock();
+			}
+			this.fileLock = true;
 			const data = await fs.promises.readFile(this.timerfile, "utf-8");
+			this.fileLock = false;
 			const timersData: Timer<"PlainText">[] = data
 				.split(/\r?\n/)
 				.filter((line) => line.trim())
@@ -71,28 +78,66 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 	}
 
 	public override async saveTimers(timers: Timer<"PlainText">[]): Promise<void> {
-		try {
-			const data = this.toStringifyTimers(timers);
+		const data = this.toStringifyTimers(timers);
 
-			await fs.promises.writeFile(this.timerfile, data, "utf8");
-			if (!this.disableCache) {
-				this.timers = timers;
+		if (!this.disableCache) {
+			this.timers = timers;
+
+			if (this.fileLock) {
+				await this.ensureFileLock();
 			}
+			this.fileLock = true;
+			fs.promises.writeFile(this.timerfile, data, "utf8")
+				.catch(async (e) => {
+					await Log.ensureLogger();
+					Log.loggerInstance?.error(`Error when saving timer data: ${e}`);
+				}).finally(() => {
+					this.fileLock = false;
+				});
+
 			return;
+		}
+		try {
+			if (this.fileLock) {
+				await this.ensureFileLock();
+			}
+			this.fileLock = true;
+			await fs.promises.writeFile(this.timerfile, data, "utf8");
 		} catch (e) {
 			throw new Error(`Error when saving timer data: ${e}`);
+		} finally {
+			this.fileLock = false;
 		}
 	}
 
 	public override async appendTimer(timer: Timer<"PlainText">): Promise<void> {
 		try {
-			await fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
 			if (!this.disableCache) {
 				this.timers.push(timer);
+
+				if (this.fileLock) {
+					await this.ensureFileLock();
+				}
+				this.fileLock = true;
+				fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n", "utf-8")
+					.catch(async (e) => {
+						await Log.ensureLogger();
+						Log.loggerInstance?.error(`Error when appending timer data: ${e}`);
+					}).finally(() => {
+						this.fileLock = false;
+					});
+				return;
 			}
-			return;
+
+			if (this.fileLock) {
+				await this.ensureFileLock();
+			}
+			this.fileLock = true;
+			await fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
 		} catch (e) {
 			throw new Error(`Error when appending timer data: ${e}`);
+		} finally {
+			this.fileLock = false;
 		}
 	}
 
