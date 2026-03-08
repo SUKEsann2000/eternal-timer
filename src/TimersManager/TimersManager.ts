@@ -120,10 +120,11 @@ export abstract class TimersManager<T extends StorageType> {
 			// uuid, start, end
 			const id = uuidv4();
 			const now = Date.now();
+			const stopTime = now + Math.max(1, length);
 			const newTimerData: Timer<T> = {
 				id,
 				start: now,
-				stop: (now + length),
+				stop: stopTime,
 				...(typeof options === "object" && options.title !== undefined && { title: options.title }),
 				...(typeof options === "object" && options.description !== undefined && { description: options.description }),
 			};
@@ -183,16 +184,20 @@ export abstract class TimersManager<T extends StorageType> {
 		this.TimersStore = this.TimersStore !== null ? this.TimersStore : await this.createTimersStore();
 		let timeout: NodeJS.Timeout | null = null;
 		const loop = async () => {
-			if (this.checkLock) return;
+			if (this.checkLock) {
+				timeout = setTimeout(loop, interval);
+				return;
+			};
 			this.checkLock = true;
+
+			const expiredTimers: Timer<T>[] = [];
 
 			await this.ensureOperationLock(); // Acquire operation lock
 			this.operationLock = true;
 			try {
-				const now = Date.now();
 				const allTimers = await this.TimersStore!.loadTimers();
+				const now = Date.now();
 				const activeTimers: Timer<T>[] = [];
-				const expiredTimers: Timer<T>[] = [];
 
 				for (const timer of allTimers) {
 					if (timer.stop <= now) {
@@ -202,19 +207,16 @@ export abstract class TimersManager<T extends StorageType> {
 					}
 				}
 
-				// Save only the active timers back to the store
-				await this.TimersStore!.saveTimers(activeTimers);
-
-				// Now, execute callbacks for expired timers
 				await Promise.all(expiredTimers.map(async timerData => {
 					try {
-						// The timer has already been removed from storage
 						await callback(timerData);
 					} catch (e) {
 						await Log.ensureLogger();
 						Log.loggerInstance?.error(`Error in callback of checkTimers: ${e}`);
 					}
 				}));
+				await this.TimersStore!.saveTimers(activeTimers);
+
 			} catch (e) {
 				await Log.ensureLogger();
 				Log.loggerInstance?.error(`Error when checking timer: ${e}`);
@@ -222,7 +224,6 @@ export abstract class TimersManager<T extends StorageType> {
 				this.operationLock = false; // Release operation lock
 				this.checkLock = false;
 				timeout = setTimeout(loop, interval);
-				return;
 			}
 		};
 
@@ -269,15 +270,13 @@ export abstract class TimersManager<T extends StorageType> {
 				throw new Error(`Timer with id ${id} not found`);
 			}
 
+			const now = Date.now();
+
 			const timer = timers[index]!;
-			const remaining = timer.stop - Date.now();
-			const newRemaining = remaining + delay;
+			const remaining = Math.max(0, timer.stop - now);
+			const newRemaining = Math.max(0, remaining + delay);
 
-			if (newRemaining < 0) {
-				throw new Error(`Resulting remaining time cannot be negative`);
-			}
-
-			timer.stop = Date.now() + newRemaining;
+			timer.stop = now + newRemaining;
 			timers[index] = timer;
 			await this.TimersStore.saveTimers(timers);
 			return;
