@@ -40,7 +40,7 @@ async function cjs_test() {
 		if (timersAfterRemove.length === 0) {
 			console.log("✅ Remove Timer OK");
 		} else {
-			console.log("❌ Delete Timer failed");
+			console.log("❌ Remove Timer failed");
 			return false;
 		}
 
