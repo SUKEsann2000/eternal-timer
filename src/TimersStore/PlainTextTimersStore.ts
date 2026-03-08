@@ -2,7 +2,6 @@ import fs from "fs";
 
 import type { Timer } from "../types.js";
 import { TimersStore } from "./TimersStore.js";
-import { Log } from "../Log.js";
 
 export class PlainTextTimersStore extends TimersStore<"PlainText"> {
     
@@ -71,6 +70,9 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 					} as Timer<"PlainText">;
 				});
 			await this.checkTimerfileSyntax(timersData);
+			if (!this.disableCache) {
+				this.timers = timersData;
+			}
 			return timersData;
 		} catch (e) {
 			throw new Error(`Error when loading timer data: ${e}`);
@@ -82,10 +84,6 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 	public override async saveTimers(timers: Timer<"PlainText">[]): Promise<void> {
 		const data = this.toStringifyTimers(timers);
 
-		if (!this.disableCache) {
-			this.timers = timers;
-		}
-
 		try {
 			if (this.fileLock) {
 				await this.ensureFileLock();
@@ -93,6 +91,9 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 			this.fileLock = true;
 			await fs.promises.writeFile(this.timerfile, data, "utf8");
 			this.fileLock = false;
+			if (!this.disableCache) {
+				this.timers = timers;
+			}
 		} catch (e) {
 			throw new Error(`Error when saving timer data: ${e}`);
 		} finally {
@@ -102,9 +103,6 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 
 	public override async appendTimer(timer: Timer<"PlainText">): Promise<void> {
 		try {
-			if (!this.disableCache) {
-				this.timers.push(timer);
-			}
 
 			if (this.fileLock) {
 				await this.ensureFileLock();
@@ -112,10 +110,13 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 			this.fileLock = true;
 			await fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
 			this.fileLock = false;
+
+			if (!this.disableCache) {
+				this.timers.push(timer);
+			}
 			return;
 		} catch (e) {
-			await Log.ensureLogger();
-			Log.loggerInstance?.error(`Error when appending timer data: ${e}`);
+			throw new Error(`Error when appending timer data: ${e}`);
 		} finally {
 			this.fileLock = false;
 		}

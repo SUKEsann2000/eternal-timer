@@ -2,7 +2,6 @@ import fs from "fs";
 
 import type { Timer } from "../types.js";
 import { TimersStore } from "./TimersStore.js";
-import { Log } from "../Log.js";
 
 export class JSONLTimersStore extends TimersStore<"JSONL"> {
 
@@ -77,16 +76,15 @@ export class JSONLTimersStore extends TimersStore<"JSONL"> {
 	public override async saveTimers(timers: Timer<"JSONL">[]): Promise<void> {
 		const data = this.toStringifyTimers(timers);
 
-		if (!this.disableCache) {
-			this.timers = timers;
-		}
-
 		try {
 			if (this.fileLock) {
 				await this.ensureFileLock();
 			}
 			this.fileLock = true;
 			await fs.promises.writeFile(this.timerfile, data, "utf-8");
+			if (!this.disableCache) {
+				this.timers = timers;
+			}
 		} catch (e) {
 			throw new Error(`Error when saving timer data: ${e}`);
 		} finally {
@@ -100,16 +98,15 @@ export class JSONLTimersStore extends TimersStore<"JSONL"> {
 			if (this.fileLock) {
 				await this.ensureFileLock();
 			}
-			if (!this.disableCache) {
-				this.timers.push(timer);
-			}
 
 			this.fileLock = true;
 			await fs.promises.appendFile(this.timerfile, line, "utf-8");
+			if (!this.disableCache) {
+				this.timers.push(timer);
+			}
 			this.fileLock = false;
 		} catch (e) {
-			await Log.ensureLogger();
-			Log.loggerInstance?.error(`Error when appending timer data: ${e}`);
+			throw new Error(`Error when appending timer data: ${e}`);
 		} finally {
 			this.fileLock = false;
 		}
