@@ -1,8 +1,11 @@
 import path from "path";
 import fs from "fs";
+import { v4 as uuidv4 } from "uuid";
+
 import searchRoot from "../searchRoot.js";
 import type { CreateTimerOptions, StorageType, Timer, TimersManagerOptions } from "../types.js";
 import { TimersStore } from "../TimersStore/TimersStore.js";
+import { Log } from "../Log.js";
 
 /**
  * TimersManager
@@ -35,6 +38,7 @@ export abstract class TimersManager<T extends StorageType> {
 	protected TimersStore: TimersStore<T> | null = null;
 
 	protected abstract getDefaultFilename(): string;
+	protected abstract createTimersStore(): Promise<TimersStore<T>>;
 
 	/**
       * constructor
@@ -101,7 +105,36 @@ export abstract class TimersManager<T extends StorageType> {
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-     public abstract createTimer(options: CreateTimerOptions<T>): Promise<string>;
+     public async createTimer(options: CreateTimerOptions<T>): Promise<string> {
+		await this.ensureOperationLock(); // Acquire operation lock
+		this.operationLock = true;
+		try {
+			this.TimersStore = this.TimersStore !== null ? this.TimersStore : await this.createTimersStore();
+			let length: number = (typeof options === "object") ? options.length : options;
+			if (length < 0) {
+				throw new Error(`Invailed length: ${length}`);
+			}
+
+			length = Math.trunc(length);
+
+			// uuid, start, end
+			const id = uuidv4();
+			const now = Date.now();
+			const newTimerData: Timer<T> = {
+				id,
+				start: now,
+				stop: (now + length),
+				...(typeof options === "object" && options.title !== undefined && { title: options.title }),
+				...(typeof options === "object" && options.description !== undefined && { description: options.description }),
+			};
+			await this.TimersStore.appendTimer(newTimerData);
+			return id;
+		} catch (e) {
+			throw new Error(`Error when creating timer: ${e}`);
+		} finally {
+			this.operationLock = false; // Release operation lock
+		}
+	 };
 
 	/**
      * removeTimer
@@ -112,7 +145,27 @@ export abstract class TimersManager<T extends StorageType> {
      * @example
      * await manager.removeTimer(id);
      */
-	public abstract removeTimer(id: string): Promise<void>;
+	public async removeTimer(id: string): Promise<void> {
+		await this.ensureOperationLock();
+		this.operationLock = true;
+		try {
+			this.TimersStore = this.TimersStore !== null ? this.TimersStore : await this.createTimersStore();
+			const timers = await this.TimersStore.loadTimers();
+
+			const index = timers.findIndex(t => t.id === id);
+			if (index === -1) {
+				throw new Error(`Timer with id ${id} not found`);
+			}
+
+			timers.splice(index, 1);
+			await this.TimersStore.saveTimers(timers);
+			return;
+		} catch (e) {
+			throw new Error(`Error when removing timer: ${e}`);
+		} finally {
+			this.operationLock = false;
+		}
+	}
 
 	/**
      * @description Starts monitoring expired timers asynchronously and returns immediately. The callback is invoked asynchronously when a timer expires.
@@ -126,7 +179,56 @@ export abstract class TimersManager<T extends StorageType> {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-     public abstract checkTimers(callback: (timer: Timer<T>) => Promise<void>, interval?: number): Promise<NodeJS.Timeout>;
+     public async checkTimers(callback: (timer: Timer<T>) => Promise<void>, interval?: number): Promise<NodeJS.Timeout> {
+		this.TimersStore = this.TimersStore !== null ? this.TimersStore : await this.createTimersStore();
+		let timeout: NodeJS.Timeout | null = null;
+		const loop = async () => {
+			if (this.checkLock) return;
+			this.checkLock = true;
+
+			await this.ensureOperationLock(); // Acquire operation lock
+			this.operationLock = true;
+			try {
+				const now = Date.now();
+				const allTimers = await this.TimersStore!.loadTimers();
+				const activeTimers: Timer<T>[] = [];
+				const expiredTimers: Timer<T>[] = [];
+
+				for (const timer of allTimers) {
+					if (timer.stop <= now) {
+						expiredTimers.push(timer);
+					} else {
+						activeTimers.push(timer);
+					}
+				}
+
+				// Save only the active timers back to the store
+				await this.TimersStore!.saveTimers(activeTimers);
+
+				// Now, execute callbacks for expired timers
+				await Promise.all(expiredTimers.map(async timerData => {
+					try {
+						// The timer has already been removed from storage
+						await callback(timerData);
+					} catch (e) {
+						await Log.ensureLogger();
+						Log.loggerInstance?.error(`Error in callback of checkTimers: ${e}`);
+					}
+				}));
+			} catch (e) {
+				await Log.ensureLogger();
+				Log.loggerInstance?.error(`Error when checking timer: ${e}`);
+			} finally {
+				this.operationLock = false; // Release operation lock
+				this.checkLock = false;
+				timeout = setTimeout(loop, interval);
+				return;
+			}
+		};
+
+		timeout = setTimeout(loop, interval);
+		return timeout;
+	 }
 
 	/**
      * showTimers
@@ -137,7 +239,15 @@ export abstract class TimersManager<T extends StorageType> {
      * const timers = await manager.showTimers();
      * console.log(JSON.stringify(timers))
      */
-	public abstract showTimers(): Promise<Timer<T>[]>;
+	public async showTimers(): Promise<Timer<T>[]> {
+		try {
+			this.TimersStore = this.TimersStore !== null ? this.TimersStore : await this.createTimersStore();
+			const timersData = await this.TimersStore.loadTimers();
+			return timersData;
+		} catch (e) {
+			throw new Error(`Error when showing timers: ${e}`);
+		}
+	}
 
      /**
       * adjustRemainingTime
@@ -147,5 +257,34 @@ export abstract class TimersManager<T extends StorageType> {
       * @returns Promise resolving when the operation is complete
       * @throws If file operation fails
       */
-     public abstract adjustRemainingTime(id: string, delay: number): Promise<void>;
+     public async adjustRemainingTime(id: string, delay: number): Promise<void> {
+		await this.ensureOperationLock(); // Acquire operation lock
+		this.operationLock = true;
+		try {
+			this.TimersStore = this.TimersStore !== null ? this.TimersStore : await this.createTimersStore();
+			const timers = await this.TimersStore.loadTimers();
+
+			const index = timers.findIndex(t => t.id === id);
+			if (index === -1) {
+				throw new Error(`Timer with id ${id} not found`);
+			}
+
+			const timer = timers[index]!;
+			const remaining = timer.stop - Date.now();
+			const newRemaining = remaining + delay;
+
+			if (newRemaining < 0) {
+				throw new Error(`Resulting remaining time cannot be negative`);
+			}
+
+			timer.stop = Date.now() + newRemaining;
+			timers[index] = timer;
+			await this.TimersStore.saveTimers(timers);
+			return;
+		} catch (e) {
+			throw new Error(`Error when adjusting remaining time: ${e}`);
+		} finally {
+			this.operationLock = false; // Release operation lock
+		}
+	 }
 }
