@@ -179,7 +179,7 @@ export abstract class TimersManager<T extends StorageType> {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-     public async checkTimers(callback: (timer: Timer<T>) => Promise<void>, interval?: number): Promise<NodeJS.Timeout> {
+     public async checkTimers(callback: (timer: Timer<T>) => Promise<void>, interval: number = 200): Promise<NodeJS.Timeout> {
 		this.TimersStore = this.TimersStore !== null ? this.TimersStore : await this.createTimersStore();
 		let timeout: NodeJS.Timeout | null = null;
 		const loop = async () => {
