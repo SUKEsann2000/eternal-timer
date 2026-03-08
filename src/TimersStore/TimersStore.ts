@@ -1,3 +1,5 @@
+import fs from "fs";
+
 import type { StorageType, Timer } from "../types.js";
 
 export abstract class TimersStore<T extends StorageType> {
@@ -39,11 +41,74 @@ export abstract class TimersStore<T extends StorageType> {
 		this.initialized = true;
 	}
 
+    public async loadTimers(): Promise<Timer<T>[]> {
+		try {
+			if (!this.disableCache && this.initialized) {
+				return this.timers;
+			}
+
+			if (this.fileLock) {
+				await this.ensureFileLock();
+			}
+			this.fileLock = true;
+			const data = await fs.promises.readFile(this.timerfile, "utf-8");
+			this.fileLock = false;
+			const timersData: Timer<T>[] = this.parseTimers(data);
+			await this.checkTimerfileSyntax(timersData);
+			if (!this.disableCache) {
+				this.timers = timersData;
+			}
+			return timersData;
+		} catch (e) {
+			throw new Error(`Error when loading timer data: ${e}`);
+		} finally {
+			this.fileLock = false;
+		}
+	}
+
+    public async saveTimers(timers: Timer<T>[]): Promise<void> {
+		const data = this.toStringifyTimers(timers);
+
+		try {
+			if (this.fileLock) {
+				await this.ensureFileLock();
+			}
+			this.fileLock = true;
+			await fs.promises.writeFile(this.timerfile, data, "utf-8");
+			if (!this.disableCache) {
+				this.timers = timers;
+			}
+		} catch (e) {
+			throw new Error(`Error when saving timer data: ${e}`);
+		} finally {
+			this.fileLock = false;
+		}
+	}
+
+    public async appendTimer(timer: Timer<T>): Promise<void> {
+		try {
+
+			if (this.fileLock) {
+				await this.ensureFileLock();
+			}
+			this.fileLock = true;
+			await fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
+			this.fileLock = false;
+
+			if (!this.disableCache) {
+				this.timers.push(timer);
+			}
+			return;
+		} catch (e) {
+			throw new Error(`Error when appending timer data: ${e}`);
+		} finally {
+			this.fileLock = false;
+		}
+	}
+
     protected abstract checkTimerfileSyntax(timers: Timer<T>[]): Promise<void>;
-    public abstract loadTimers(): Promise<Timer<T>[]>;
-    public abstract saveTimers(timers: Timer<T>[]): Promise<void>;
-    public abstract appendTimer(timer: Timer<T>): Promise<void>;
     public abstract toStringifyTimers(timers: Timer<T>[]): string;
+	public abstract parseTimers(data: string): Timer<T>[];
     protected ensureFileLock(): Promise<void> {
     	return new Promise((resolve) => {
     		const checkLock = () => {

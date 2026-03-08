@@ -1,5 +1,3 @@
-import fs from "fs";
-
 import type { Timer } from "../types.js";
 import { TimersStore } from "./TimersStore.js";
 
@@ -45,77 +43,17 @@ export class JSONLTimersStore extends TimersStore<"JSONL"> {
 		}
 	}
 
-	public override async loadTimers(): Promise<Timer<"JSONL">[]> {
-		try {
-			if (!this.disableCache && this.initialized) {
-				return this.timers;
-			}
-
-			if (this.fileLock) {
-				await this.ensureFileLock();
-			}
-			this.fileLock = true;
-			const data = await fs.promises.readFile(this.timerfile, "utf-8");
-			this.fileLock = false;
-			const timersData: Timer<"JSONL">[] = data
-				.split(/\r?\n/)
-				.filter((line) => line.trim())
-				.map((line) => JSON.parse(line) as Timer<"JSONL">);
-			await this.checkTimerfileSyntax(timersData);
-			if (!this.disableCache) {
-				this.timers = timersData;
-			}
-			return timersData;
-		} catch (e) {
-			throw new Error(`Error when loading timer data: ${e}`);
-		} finally {
-			this.fileLock = false;
-		}
-	}
-
-	public override async saveTimers(timers: Timer<"JSONL">[]): Promise<void> {
-		const data = this.toStringifyTimers(timers);
-
-		try {
-			if (this.fileLock) {
-				await this.ensureFileLock();
-			}
-			this.fileLock = true;
-			await fs.promises.writeFile(this.timerfile, data, "utf-8");
-			if (!this.disableCache) {
-				this.timers = timers;
-			}
-		} catch (e) {
-			throw new Error(`Error when saving timer data: ${e}`);
-		} finally {
-			this.fileLock = false;
-		}
-	}
-
-	public override async appendTimer(timer: Timer<"JSONL">): Promise<void> {
-		try {
-			const line = this.toStringifyTimers([timer]);
-			if (this.fileLock) {
-				await this.ensureFileLock();
-			}
-
-			this.fileLock = true;
-			await fs.promises.appendFile(this.timerfile, line, "utf-8");
-			if (!this.disableCache) {
-				this.timers.push(timer);
-			}
-			this.fileLock = false;
-		} catch (e) {
-			throw new Error(`Error when appending timer data: ${e}`);
-		} finally {
-			this.fileLock = false;
-		}
-	}
-
 	public override toStringifyTimers(timers: Timer<"JSONL">[]): string {
 		if (timers.length === 0) {
 			return "";
 		}
 		return timers.map(t => JSON.stringify(t)).join("\n") + "\n";
+	}
+
+	public override parseTimers(data: string): Timer<"JSONL">[] {
+		return data
+			.split(/\r?\n/)
+			.filter((line) => line.trim())
+			.map((line) => JSON.parse(line) as Timer<"JSONL">);
 	}
 }
