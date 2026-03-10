@@ -23,9 +23,7 @@ export async function module_test() {
 		const interval = await manager.checkTimers(async (timer) => {
 			finishedTimers.push(timer.id);
 		});
-		while (finishedTimers.length < 2) {
-			await new Promise(r => setTimeout(r, 50));
-		}
+		await new Promise(resolve => setTimeout(resolve, 2000));
 
 		clearInterval(interval);
 
