@@ -2,7 +2,7 @@ import type { Timer } from "../types.js";
 import { TimersStore } from "./TimersStore.js";
 
 export class PlainTextTimersStore extends TimersStore<"PlainText"> {
-    
+
 	constructor(
 		timerfile: string,
 	) {
@@ -12,7 +12,7 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 	/**
      * checkTimerfileSyntax
      * @description Checks the syntax of the timer file.
-     * @param fileData 
+     * @param fileData
      * @returns void
      * @throws If syntax is invalid
      */

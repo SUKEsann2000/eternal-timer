@@ -6,9 +6,9 @@ export async function module_test() {
 
 		const timer1 = isJSONL ? await manager.createTimer({length: 1000, title: "TestTimer1", description: "This is test1"}) : await manager.createTimer(1000);
 		const timer2 = isJSONL ? await manager.createTimer({length: 1500, title: "TestTimer2", description: "This is test2"}) : await manager.createTimer(1500);
-	
+
 		const timersAfterCreate = await manager.showTimers();
-	
+
 		if (
 			timersAfterCreate.some(t => t.id === timer1) &&
 			timersAfterCreate.some(t => t.id === timer2)
@@ -18,7 +18,7 @@ export async function module_test() {
 			console.log("❌ Creating Timer Failed");
 			return false;
 		}
-	
+
 		const finishedTimers = [];
 		const interval = await manager.checkTimers(async (timer) => {
 			finishedTimers.push(timer.id);
@@ -33,12 +33,12 @@ export async function module_test() {
 			console.log("❌ Callback of Timer Failed");
 			return false;
 		}
-	
+
 		const timer3 = await manager.createTimer(5000);
-	
+
 		await manager.removeTimer(timer3);
 		const timersAfterRemove = await manager.showTimers();
-	
+
 		if (timersAfterRemove.length === 0) {
 			console.log("✅ Remove Timer OK");
 		} else {

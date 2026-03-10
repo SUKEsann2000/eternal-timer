@@ -17,7 +17,7 @@ for (const subDir of subDirs) {
 			fs.renameSync(oldPath, newPath);
 
 			let content = fs.readFileSync(newPath, "utf-8");
-			
+
 			content = content.replace(
 				/(require\(['"](\.\.?\/[^'"]+))\.js(['"]\))/g,
 				"$1.cjs$3",
@@ -36,7 +36,7 @@ for (const subDir of subDirs) {
 			fs.renameSync(oldPath, newPath);
 
 			let content = fs.readFileSync(newPath, "utf-8");
-			
+
 			content = content.replace(/(require\(['"]\.\/[^'"]+)\.js(['"]\))/g, "$1.cjs$2");
 			content = content.replace(/(from ['"][^'"]+)\.js(['"])/g, "$1.cjs$2");
 			fs.writeFileSync(newPath, content, "utf-8");
