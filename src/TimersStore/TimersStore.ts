@@ -18,7 +18,7 @@ export abstract class TimersStore<T extends StorageType> {
 			await this.checkTimerfileSyntax(timersData);
 			return timersData;
 		} catch (e) {
-			throw new Error(`Error when loading timer data: ${e}`);
+			throw new Error("Error when loading timer data", { cause: e });
 		}
 	}
 
@@ -28,7 +28,7 @@ export abstract class TimersStore<T extends StorageType> {
 		try {
 			await fs.promises.writeFile(this.timerfile, data, "utf-8");
 		} catch (e) {
-			throw new Error(`Error when saving timer data: ${e}`);
+			throw new Error(`Error when saving timer data`, { cause: e });
 		}
 	}
 
@@ -37,7 +37,7 @@ export abstract class TimersStore<T extends StorageType> {
 			await fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
 			return;
 		} catch (e) {
-			throw new Error(`Error when appending timer data: ${e}`);
+			throw new Error(`Error when appending timer data`, { cause: e });
 		}
 	}
 
