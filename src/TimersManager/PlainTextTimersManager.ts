@@ -19,6 +19,6 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 	}
 
 	protected async createTimersStore(): Promise<TimersStore<"PlainText">> {
-		return await PlainTextTimersStore.create(this.disableCache, this.timerfiledir);
+		return new PlainTextTimersStore(this.timerfiledir);
 	}
 }

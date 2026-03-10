@@ -3,23 +3,10 @@ import { TimersStore } from "./TimersStore.js";
 
 export class JSONLTimersStore extends TimersStore<"JSONL"> {
 
-	private constructor(
-		disableCache: boolean,
+	constructor(
 		timerfile: string,
 	) {
-		super(disableCache, timerfile);
-	}
-
-	static async create(
-		disableCache: boolean,
-		timerfile: string,
-	): Promise<JSONLTimersStore> {
-
-		const store = new JSONLTimersStore(disableCache, timerfile);
-
-		await store.init();
-
-		return store;
+		super(timerfile);
 	}
 
 	/**

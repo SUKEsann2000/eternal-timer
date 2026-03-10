@@ -3,22 +3,10 @@ import { TimersStore } from "./TimersStore.js";
 
 export class PlainTextTimersStore extends TimersStore<"PlainText"> {
     
-	private constructor(
-		disableCache: boolean,
+	constructor(
 		timerfile: string,
 	) {
-		super(disableCache, timerfile);
-	}
-
-	static async create(
-		disableCache: boolean,
-		timerfile: string,
-	): Promise<PlainTextTimersStore> {
-		const store = new PlainTextTimersStore(disableCache, timerfile);
-
-		await store.init();
-
-		return store;
+		super(timerfile);
 	}
 
 	/**

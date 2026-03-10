@@ -34,7 +34,6 @@ export abstract class TimersManager<T extends StorageType> {
 	 */
 	protected operationLock: boolean = false;
 
-	protected disableCache: boolean = false;
 	protected TimersStore: TimersStore<T> | null = null;
 
 	protected abstract getDefaultFilename(): string;
@@ -65,7 +64,6 @@ export abstract class TimersManager<T extends StorageType> {
 			if (!this.timerfiledir.startsWith(rootDir)) {
 				throw new Error(`Timer file path must be within the project directory`);
 			}
-			this.disableCache = options?.disableCache ?? false;
 		}
 		try {
 			fs.accessSync(this.timerfiledir);

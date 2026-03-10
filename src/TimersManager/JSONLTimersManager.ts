@@ -19,6 +19,6 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 	}
 
 	protected override async createTimersStore(): Promise<TimersStore<"JSONL">> {
-		return await JSONLTimersStore.create(this.disableCache, this.timerfiledir);
+		return new JSONLTimersStore(this.timerfiledir);
 	}
 }

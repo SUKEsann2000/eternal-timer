@@ -3,7 +3,6 @@ import fs from "fs";
 import type { StorageType, Timer } from "../types.js";
 
 export abstract class TimersStore<T extends StorageType> {
-	protected readonly disableCache: boolean;
 	protected readonly timerfile: string;
 
 	/**
@@ -19,42 +18,19 @@ export abstract class TimersStore<T extends StorageType> {
 	 */
 	protected fileLock: boolean = false;
 
-	protected initialized = false;
-	protected timers: Timer<T>[] = [];
-
 	protected constructor(
-		disableCache: boolean,
 		timerfile: string,
 	) {
-		this.disableCache = disableCache;
 		this.timerfile = timerfile;
-
-		if (disableCache) {
-			this.initialized = true;
-		}
-	}
-
-	protected async init(): Promise<void> {
-		if (this.disableCache) return;
-
-		await this.loadTimers();
-		this.initialized = true;
 	}
 
     public async loadTimers(): Promise<Timer<T>[]> {
-		if (!this.disableCache && this.initialized) {
-			return this.timers;
-		}
-
         await this.ensureFileLock();
 		this.fileLock = true;
 		try {
             const data = await fs.promises.readFile(this.timerfile, "utf-8");
             const timersData: Timer<T>[] = this.parseTimers(data);
             await this.checkTimerfileSyntax(timersData);
-            if (!this.disableCache) {
-                this.timers = timersData;
-            }
             return timersData;
         } catch (e) {
             throw new Error(`Error when loading timer data: ${e}`);
@@ -70,9 +46,6 @@ export abstract class TimersStore<T extends StorageType> {
 		this.fileLock = true;
 		try {
 			await fs.promises.writeFile(this.timerfile, data, "utf-8");
-			if (!this.disableCache) {
-				this.timers = timers;
-			}
 		} catch (e) {
 			throw new Error(`Error when saving timer data: ${e}`);
 		} finally {
@@ -85,10 +58,6 @@ export abstract class TimersStore<T extends StorageType> {
 		this.fileLock = true;
 		try {
 			await fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
-
-			if (!this.disableCache) {
-				this.timers.push(timer);
-			}
 			return;
 		} catch (e) {
 			throw new Error(`Error when appending timer data: ${e}`);
