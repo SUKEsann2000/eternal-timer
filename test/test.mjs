@@ -52,7 +52,7 @@ export async function module_test() {
 		await manager.adjustRemainingTime(timer4, -9500);
 
 		let adjustedTimerFinished = false;
-		const adjustInterval = manager.checkTimers(async (timer) => {
+		const adjustInterval = await manager.checkTimers(async (timer) => {
 			if (timer.id === timer4) {
 				adjustedTimerFinished = true;
 			}

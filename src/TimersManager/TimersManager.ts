@@ -128,14 +128,16 @@ export abstract class TimersManager<T extends StorageType> {
 	}
 
 	/**
-     * @description Starts monitoring expired timers asynchronously and returns immediately. The callback is invoked asynchronously when a timer expires.
-     * The callback is awaited before continuing.
+	 * checkTimers
+ 	 * @description Starts monitoring timers at the specified interval.
+     * When a timer expires, the provided `callback` is invoked with the timer.
+	 * The callback is awaited before the next processing cycle continues.
      * @param callback Function invoked when an expired timer is detected (called asynchronously)
      * @param interval (number, optional): Check interval in milliseconds (default: 200ms)
      * @throws If file operation fails
-	 * @returns (NodeJS.Timeout) intervalId interval id of checkTimers
+	 * @returns (Promise<NodeJS.Timeout>) intervalId interval id of checkTimers
      * @example
-     * const interval = manager.checkTimers((timer) => {
+     * const interval = await manager.checkTimers((timer) => {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */

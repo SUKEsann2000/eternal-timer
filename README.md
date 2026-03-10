@@ -37,7 +37,7 @@ async function main() {
     console.log('Timer created:', timerId);
 
     // Monitor timers (executes when timer expires)
-    const interval = manager.checkTimers(async (timer) => {
+    const interval = await manager.checkTimers(async (timer) => {
         console.log('Timer expired:', timer.id, timer.title);
         // Once the timer expires, you can remove it
         await manager.removeTimer(timer.id);
@@ -73,7 +73,7 @@ async function main() {
     console.log('Timer created:', timerId);
 
     // Monitor timers
-    const interval = manager.checkTimers(async (timer) => {
+    const interval = await manager.checkTimers(async (timer) => {
         console.log('Timer expired:', timer.id);
         await manager.removeTimer(timer.id);
     });
@@ -144,18 +144,22 @@ Removes a timer by its ID.
 
 **Throws:** An error if the timer with the specified ID is not found or if a file operation fails.
 
-### `checkTimers(callback: (timer: Timer) => Promise<void>, interval?: number): NodeJS.Timeout`
+### `checkTimers(callback: (timer: Timer) => void | Promise<void>, interval?: number): Promise<NodeJS.Timeout>`
 
-Starts monitoring for expired timers at a specified interval. This function runs asynchronously and will not block execution.
+Starts monitoring timers at the specified interval and invokes the provided
+`callback` when a timer expires.
 
-When an expired timer is found, the provided `callback` function is invoked with the `timer` object. The entire process of checking for, and removing, expired timers is now atomic, preventing race conditions with other timer modification operations. The function waits for the `callback`'s `Promise` to resolve before proceeding to the next check. Error handling is within the `callback` to prevent the application from crashing if an error occurs during timer processing.
+For each expired timer, the `callback` is awaited before processing continues.
+Monitoring runs periodically in the background and can be stopped using the
+returned `NodeJS.Timeout`.
 
-- **`callback`**: An async function that is called with the expired `timer` object.
-- **`interval`** (optional, number): The interval in milliseconds to check for expired timers. Defaults to `200ms`.
+- **callback**: An async function invoked with the expired `timer`.
+- **interval** *(optional, number)*: Interval in milliseconds for checking timers.
+  Defaults to `200`.
 
-**Returns:** A `NodeJS.Timeout` object that can be used with `clearInterval()` to stop monitoring.
+**Returns:** A `NodeJS.Timeout` that can be passed to `clearInterval()` to stop monitoring.
 
-**Throws:** An error if a file operation fails during monitoring.
+**Throws:** An error if a timer storage operation fails.
 
 ### `showTimers(): Promise<Timer[]>`
 
