@@ -34,7 +34,7 @@ export class JSONLTimersStore extends TimersStore<"JSONL"> {
 		if (timers.length === 0) {
 			return "";
 		}
-		return timers.map(t => JSON.stringify(t)).join("\n") + "\n";
+		return timers.map(t => JSON.stringify(t)).join("\n");
 	}
 
 	public override parseTimers(data: string): Timer<"JSONL">[] {

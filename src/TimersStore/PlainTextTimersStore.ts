@@ -36,7 +36,7 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 		if (timers.length === 0) {
 			return "";
 		}
-		return timers.map(timer => `${timer.id} ${timer.start} ${timer.stop}`).join("\n") + "\n";
+		return timers.map(timer => `${timer.id} ${timer.start} ${timer.stop}`).join("\n");
 	}
 
 	public override parseTimers(data: string): Timer<"PlainText">[] {
