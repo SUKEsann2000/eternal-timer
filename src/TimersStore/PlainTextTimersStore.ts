@@ -41,15 +41,15 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 
 	public override parseTimers(data: string): Timer<"PlainText">[] {
 		return data
-				.split(/\r?\n/)
-				.filter((line) => line.trim())
-				.map((line) => {
-					const [id, startStr, stopStr] = line.split(" ");
-					return {
-						id: id!,
-						start: Number(startStr!),
-						stop: Number(stopStr!),
-					} as Timer<"PlainText">;
-				});
+			.split(/\r?\n/)
+			.filter((line) => line.trim())
+			.map((line) => {
+				const [id, startStr, stopStr] = line.split(" ");
+				return {
+					id: id!,
+					start: Number(startStr!),
+					stop: Number(stopStr!),
+				} as Timer<"PlainText">;
+			});
 	}
 }

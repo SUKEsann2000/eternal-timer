@@ -11,18 +11,18 @@ export abstract class TimersStore<T extends StorageType> {
 		this.timerfile = timerfile;
 	}
 
-    public async loadTimers(): Promise<Timer<T>[]> {
+	public async loadTimers(): Promise<Timer<T>[]> {
 		try {
-            const data = await fs.promises.readFile(this.timerfile, "utf-8");
-            const timersData: Timer<T>[] = this.parseTimers(data);
-            await this.checkTimerfileSyntax(timersData);
-            return timersData;
-        } catch (e) {
-            throw new Error(`Error when loading timer data: ${e}`);
-        }
-    }
+			const data = await fs.promises.readFile(this.timerfile, "utf-8");
+			const timersData: Timer<T>[] = this.parseTimers(data);
+			await this.checkTimerfileSyntax(timersData);
+			return timersData;
+		} catch (e) {
+			throw new Error(`Error when loading timer data: ${e}`);
+		}
+	}
 
-    public async saveTimers(timers: Timer<T>[]): Promise<void> {
+	public async saveTimers(timers: Timer<T>[]): Promise<void> {
 		const data = this.toStringifyTimers(timers);
 
 		try {
@@ -32,7 +32,7 @@ export abstract class TimersStore<T extends StorageType> {
 		}
 	}
 
-    public async appendTimer(timer: Timer<T>): Promise<void> {
+	public async appendTimer(timer: Timer<T>): Promise<void> {
 		try {
 			await fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
 			return;

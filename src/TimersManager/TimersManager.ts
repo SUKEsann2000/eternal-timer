@@ -25,7 +25,7 @@ export abstract class TimersManager<T extends StorageType> {
 	private queue: Promise<void> = Promise.resolve();
 	private runExclusive<T>(fn: () => Promise<T>) {
 		const p = this.queue.then(fn);
-		this.queue = p.then(() => {}, () => {})
+		this.queue = p.then(() => {}, () => {});
 		return p;
 	}
 
@@ -177,11 +177,11 @@ export abstract class TimersManager<T extends StorageType> {
 
 				for (const timerData of expiredTimers) {
 					try {
-						await callback(timerData)
+						await callback(timerData);
 					} catch (e) {
 						await Log.ensureLogger();
 						Log.loggerInstance?.error(
-							`Error in callback of checkTimers: ${e}`
+							`Error in callback of checkTimers: ${e}`,
 						);
 					}
 				}
@@ -213,7 +213,7 @@ export abstract class TimersManager<T extends StorageType> {
 		});
 	}
 
-     /**
+	/**
       * adjustRemainingTime
       * @description Adjusts the remaining time of a timer.
       * @param id ID of the timer to modify
@@ -221,7 +221,7 @@ export abstract class TimersManager<T extends StorageType> {
       * @returns Promise resolving when the operation is complete
       * @throws If file operation fails
       */
-     public async adjustRemainingTime(id: string, delay: number): Promise<void> {
+	public async adjustRemainingTime(id: string, delay: number): Promise<void> {
 		return this.runExclusive(async () => {
 			this.TimersStore ??= await this.createTimersStore();
 			const timers = await this.TimersStore.loadTimers();
