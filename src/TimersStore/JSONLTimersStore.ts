@@ -23,7 +23,7 @@ export class JSONLTimersStore extends TimersStore<"JSONL"> {
 			throw new Error(`Timer file's syntax is wrong`);
 		};
 		for (const timer of timers) {
-			if (!timer.id || validate(timer.id)) throwing();
+			if (!timer.id || !validate(timer.id)) throwing();
 			if (!timer.start || typeof timer.start !== "number") throwing();
 			if (!timer.stop || typeof timer.stop !== "number") throwing();
 			if (timer.start > timer.stop) throwing();
