@@ -3,7 +3,7 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 
 import searchRoot from "../searchRoot.js";
-import type { CreateTimerOptions, StorageType, Timer, TimersManagerOptions } from "../types.js";
+import type { CreateTimerOptions, StorageType, Timer } from "../types.js";
 import { TimersStore } from "../TimersStore/TimersStore.js";
 import { Log } from "../Log.js";
 
@@ -42,20 +42,12 @@ export abstract class TimersManager<T extends StorageType> {
       * const manager = new TimersManager("/path/to/timers.txt"); // Uses specified timer file path
       */
 	constructor(
-		options?: TimersManagerOptions,
+		options?: string,
 	) {
 		const rootDir = searchRoot();
-		if (typeof options === "string") {
-			this.timerfiledir = path.resolve(rootDir, options);
-			if (!this.timerfiledir.startsWith(rootDir)) {
-				throw new Error(`Timer file path must be within the project directory`);
-			}
-		} else {
-			const timerfiledir = options?.timerfiledir ? path.resolve(rootDir, options.timerfiledir) : path.join(rootDir, this.getDefaultFilename());
-			this.timerfiledir = timerfiledir;
-			if (!this.timerfiledir.startsWith(rootDir)) {
-				throw new Error(`Timer file path must be within the project directory`);
-			}
+		this.timerfiledir = path.resolve(rootDir, options ?? this.getDefaultFilename());
+		if (!this.timerfiledir.startsWith(rootDir)) {
+			throw new Error(`Timer file path must be within the project directory`);
 		}
 		try {
 			fs.accessSync(this.timerfiledir);

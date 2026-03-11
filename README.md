@@ -39,8 +39,6 @@ async function main() {
     // Monitor timers (executes when timer expires)
     const interval = await manager.checkTimers(async (timer) => {
         console.log('Timer expired:', timer.id, timer.title);
-        // Once the timer expires, you can remove it
-        await manager.removeTimer(timer.id);
     });
 
     // Display all timers
@@ -75,7 +73,6 @@ async function main() {
     // Monitor timers
     const interval = await manager.checkTimers(async (timer) => {
         console.log('Timer expired:', timer.id);
-        await manager.removeTimer(timer.id);
     });
 
     // Display all timers
@@ -196,7 +193,7 @@ type Timer<T extends StorageType> = {
   stop: number;
 } & (T extends "JSONL"
   ? { title?: string; description?: string }
-  : object);
+  : {});
 ```
 
 ## Scripts
