@@ -34,13 +34,12 @@ export abstract class TimersManager<T extends StorageType> {
 
 	/**
       * constructor
-      * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created. Cache is enabled by default.
-      * @param options (TimersManagerOptions | string, optional) Configuration object or timer file path. If a string is provided, it is treated as the timer file path. If an object is provided, `timerfiledir` and `disableCache` can be specified.
+      * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created.
+      * @param options (TimersManagerOptions | string, optional) Configuration object or timer file path. If a string is provided, it is treated as the timer file path. If an object is provided, `timerfiledir` can be specified.
       * @throws If file access or creation fails
       * @example
-      * const manager = new TimersManager(); // Uses default timer file path (cache enabled)
-      * const managerWithPath = new TimersManager("/path/to/timers.txt"); // Uses specified timer file path
-      * const managerNoCache = new TimersManager({ disableCache: true }); // Disables cache
+      * const manager = new TimersManager(); // Uses default timer file path
+      * const manager = new TimersManager("/path/to/timers.txt"); // Uses specified timer file path
       */
 	constructor(
 		options?: TimersManagerOptions,
