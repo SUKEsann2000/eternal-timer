@@ -24,7 +24,7 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 		};
 		for (const timer of timers) {
 			if (Object.keys(timer).length !== 3) throwing();
-			if (validate(timer.id)) throwing();
+			if (!validate(timer.id)) throwing();
 			if (isNaN(Number(timer.start))) throwing();
 			if (isNaN(Number(timer.stop))) throwing();
 			if (Number(timer.start) > Number(timer.stop)) throwing();
