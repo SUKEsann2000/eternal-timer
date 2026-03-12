@@ -1,6 +1,5 @@
 import { TimersManager } from "./TimersManager.js";
 import { JSONLTimersStore } from "../TimersStore/JSONLTimersStore.js";
-import type { TimersStore } from "src/TimersStore/TimersStore.js";
 
 /**
  * JSONLTimersManager
@@ -18,7 +17,7 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 		return ".timers.jsonl";
 	}
 
-	protected override async createTimersStore(): Promise<TimersStore<"JSONL">> {
+	protected override async createTimersStore(): Promise<JSONLTimersStore> {
 		return new JSONLTimersStore(this.timerfiledir);
 	}
 }

@@ -1,6 +1,5 @@
 import { TimersManager } from "./TimersManager.js";
 import { PlainTextTimersStore } from "../TimersStore/PlainTextTimersStore.js";
-import type { TimersStore } from "src/TimersStore/TimersStore.js";
 
 /**
  * PlainTextTimersManager
@@ -18,7 +17,7 @@ export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 		return ".timers";
 	}
 
-	protected async createTimersStore(): Promise<TimersStore<"PlainText">> {
+	protected async createTimersStore(): Promise<PlainTextTimersStore> {
 		return new PlainTextTimersStore(this.timerfiledir);
 	}
 }
