@@ -98,6 +98,26 @@ Creates a manager for timers stored in **JSON Lines** format.
 
 - **`timerfiledir`** (optional, string): Path to the timer file. Defaults to `.timers.jsonl` in the project root.
 
+#### `changeTitle(id: string, newTitle: string): Promise<void>`
+Changes the title of an existing timer.
+
+- **`id`**: The ID of the timer to modify.
+- **`newTitle`**: The new title for the timer.
+
+**Returns:** A `Promise<void>` that resolves when the timer's title has been updated.
+
+**Throws:** An error if: the timer with the specified ID is not found, or a file operation fails.
+
+#### `changeDescription(id: string, newDescription: string): Promise<void>`
+Changes the description of an existing timer.
+
+- **`id`**: The ID of the timer to modify.
+- **`newDescription`**: The new description for the timer.
+
+**Returns:** A `Promise<void>` that resolves when the timer's description has been updated.
+
+**Throws:** An error if: the timer with the specified ID is not found, or a file operation fails.
+
 ### `PlainTextTimersManager`
 
 #### `constructor(timerfiledir?: string)`
