@@ -23,7 +23,7 @@ export abstract class TimersManager<T extends StorageType> {
 	protected TimersStore: TimersStore<T> | null = null;
 
 	private queue: Promise<void> = Promise.resolve();
-	private runExclusive<T>(fn: () => Promise<T>) {
+	protected runExclusive<T>(fn: () => Promise<T>) {
 		const p = this.queue.then(fn);
 		this.queue = p.then(() => {}, () => {});
 		return p;

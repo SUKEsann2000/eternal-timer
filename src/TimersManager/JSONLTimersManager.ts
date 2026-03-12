@@ -20,4 +20,22 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 	protected override async createTimersStore(): Promise<JSONLTimersStore> {
 		return new JSONLTimersStore(this.timerfiledir);
 	}
+
+	public async changeTitle(id: string, newTitle: string): Promise<void> {
+		return this.runExclusive(async () => {
+			this.TimersStore ??= await this.createTimersStore();
+			try {
+				const timers = await this.TimersStore.loadTimers();
+
+				const index = timers?.findIndex(t => t.id === id);
+				if (index === -1) {
+					throw new Error(`Timer with id ${id} not found`);
+				}
+
+				timers[index]!.title = newTitle;
+			} catch (e) {
+				throw new Error(`Error when changing title`, { cause: e });
+			}
+		});
+	}
 }
