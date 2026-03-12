@@ -38,4 +38,22 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 			}
 		});
 	}
+
+	public async changeDescription(id: string, newDescription: string): Promise<void> {
+		return this.runExclusive(async () => {
+			this.TimersStore ??= await this.createTimersStore();
+			try {
+				const timers = await this.TimersStore.loadTimers();
+
+				const index = timers?.findIndex(t => t.id === id);
+				if (index === -1) {
+					throw new Error(`Timer with id ${id} not found`);
+				}
+
+				timers[index]!.description = newDescription;
+			} catch (e) {
+				throw new Error(`Error when changing description`, { cause: e });
+			}
+		});
+	}
 }
