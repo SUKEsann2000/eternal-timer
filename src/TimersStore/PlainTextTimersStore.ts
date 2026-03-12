@@ -1,8 +1,10 @@
+import { validate } from "uuid";
+
 import type { Timer } from "../types.js";
 import { TimersStore } from "./TimersStore.js";
 
 export class PlainTextTimersStore extends TimersStore<"PlainText"> {
-    
+
 	constructor(
 		timerfile: string,
 	) {
@@ -12,7 +14,7 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 	/**
      * checkTimerfileSyntax
      * @description Checks the syntax of the timer file.
-     * @param fileData 
+     * @param fileData
      * @returns void
      * @throws If syntax is invalid
      */
@@ -22,9 +24,7 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 		};
 		for (const timer of timers) {
 			if (Object.keys(timer).length !== 3) throwing();
-			if (timer.id?.length !== 36) throwing();
-			if (timer.start.toString() === "") throwing();
-			if (timer.stop.toString() === "") throwing();
+			if (!validate(timer.id)) throwing();
 			if (isNaN(Number(timer.start))) throwing();
 			if (isNaN(Number(timer.stop))) throwing();
 			if (Number(timer.start) > Number(timer.stop)) throwing();
@@ -41,15 +41,15 @@ export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 
 	public override parseTimers(data: string): Timer<"PlainText">[] {
 		return data
-				.split(/\r?\n/)
-				.filter((line) => line.trim())
-				.map((line) => {
-					const [id, startStr, stopStr] = line.split(" ");
-					return {
-						id: id!,
-						start: Number(startStr!),
-						stop: Number(stopStr!),
-					} as Timer<"PlainText">;
-				});
+			.split(/\r?\n/)
+			.filter((line) => line.trim())
+			.map((line) => {
+				const [id, startStr, stopStr] = line.split(" ");
+				return {
+					id: id!,
+					start: Number(startStr!),
+					stop: Number(stopStr!),
+				} as Timer<"PlainText">;
+			});
 	}
 }

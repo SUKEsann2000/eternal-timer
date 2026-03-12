@@ -3,7 +3,7 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 
 import searchRoot from "../searchRoot.js";
-import type { CreateTimerOptions, StorageType, Timer, TimersManagerOptions } from "../types.js";
+import type { CreateTimerOptions, StorageType, Timer } from "../types.js";
 import { TimersStore } from "../TimersStore/TimersStore.js";
 import { Log } from "../Log.js";
 
@@ -23,9 +23,9 @@ export abstract class TimersManager<T extends StorageType> {
 	protected TimersStore: TimersStore<T> | null = null;
 
 	private queue: Promise<void> = Promise.resolve();
-	private runExclusive<T>(fn: () => Promise<T>) {
+	protected runExclusive<T>(fn: () => Promise<T>) {
 		const p = this.queue.then(fn);
-		this.queue = p.then(() => {}, () => {})
+		this.queue = p.then(() => {}, () => {});
 		return p;
 	}
 
@@ -34,29 +34,20 @@ export abstract class TimersManager<T extends StorageType> {
 
 	/**
       * constructor
-      * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created. Cache is enabled by default.
-      * @param options (TimersManagerOptions | string, optional) Configuration object or timer file path. If a string is provided, it is treated as the timer file path. If an object is provided, `timerfiledir` and `disableCache` can be specified.
+      * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created.
+      * @param options (TimersManagerOptions | string, optional) Configuration object or timer file path. If a string is provided, it is treated as the timer file path. If an object is provided, `timerfiledir` can be specified.
       * @throws If file access or creation fails
       * @example
-      * const manager = new TimersManager(); // Uses default timer file path (cache enabled)
-      * const managerWithPath = new TimersManager("/path/to/timers.txt"); // Uses specified timer file path
-      * const managerNoCache = new TimersManager({ disableCache: true }); // Disables cache
+      * const manager = new TimersManager(); // Uses default timer file path
+      * const manager = new TimersManager("/path/to/timers.txt"); // Uses specified timer file path
       */
 	constructor(
-		options?: TimersManagerOptions,
+		options?: string,
 	) {
 		const rootDir = searchRoot();
-		if (typeof options === "string") {
-			this.timerfiledir = path.resolve(rootDir, options);
-			if (!this.timerfiledir.startsWith(rootDir)) {
-				throw new Error(`Timer file path must be within the project directory`);
-			}
-		} else {
-			const timerfiledir = options?.timerfiledir ? path.resolve(rootDir, options.timerfiledir) : path.join(rootDir, this.getDefaultFilename());
-			this.timerfiledir = timerfiledir;
-			if (!this.timerfiledir.startsWith(rootDir)) {
-				throw new Error(`Timer file path must be within the project directory`);
-			}
+		this.timerfiledir = path.resolve(rootDir, options ?? this.getDefaultFilename());
+		if (!this.timerfiledir.startsWith(rootDir)) {
+			throw new Error(`Timer file path must be within the project directory`);
 		}
 		try {
 			fs.accessSync(this.timerfiledir);
@@ -177,11 +168,11 @@ export abstract class TimersManager<T extends StorageType> {
 
 				for (const timerData of expiredTimers) {
 					try {
-						await callback(timerData)
+						await callback(timerData);
 					} catch (e) {
 						await Log.ensureLogger();
 						Log.loggerInstance?.error(
-							`Error in callback of checkTimers: ${e}`
+							`Error in callback of checkTimers: ${e}`,
 						);
 					}
 				}
@@ -213,7 +204,7 @@ export abstract class TimersManager<T extends StorageType> {
 		});
 	}
 
-     /**
+	/**
       * adjustRemainingTime
       * @description Adjusts the remaining time of a timer.
       * @param id ID of the timer to modify
@@ -221,7 +212,7 @@ export abstract class TimersManager<T extends StorageType> {
       * @returns Promise resolving when the operation is complete
       * @throws If file operation fails
       */
-     public async adjustRemainingTime(id: string, delay: number): Promise<void> {
+	public async adjustRemainingTime(id: string, delay: number): Promise<void> {
 		return this.runExclusive(async () => {
 			this.TimersStore ??= await this.createTimersStore();
 			const timers = await this.TimersStore.loadTimers();

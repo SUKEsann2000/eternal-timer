@@ -11,33 +11,33 @@ export abstract class TimersStore<T extends StorageType> {
 		this.timerfile = timerfile;
 	}
 
-    public async loadTimers(): Promise<Timer<T>[]> {
+	public async loadTimers(): Promise<Timer<T>[]> {
 		try {
-            const data = await fs.promises.readFile(this.timerfile, "utf-8");
-            const timersData: Timer<T>[] = this.parseTimers(data);
-            await this.checkTimerfileSyntax(timersData);
-            return timersData;
-        } catch (e) {
-            throw new Error(`Error when loading timer data: ${e}`);
-        }
-    }
+			const data = await fs.promises.readFile(this.timerfile, "utf-8");
+			const timersData: Timer<T>[] = this.parseTimers(data);
+			await this.checkTimerfileSyntax(timersData);
+			return timersData;
+		} catch (e) {
+			throw new Error("Error when loading timer data", { cause: e });
+		}
+	}
 
-    public async saveTimers(timers: Timer<T>[]): Promise<void> {
+	public async saveTimers(timers: Timer<T>[]): Promise<void> {
 		const data = this.toStringifyTimers(timers);
 
 		try {
 			await fs.promises.writeFile(this.timerfile, data, "utf-8");
 		} catch (e) {
-			throw new Error(`Error when saving timer data: ${e}`);
+			throw new Error(`Error when saving timer data`, { cause: e });
 		}
 	}
 
-    public async appendTimer(timer: Timer<T>): Promise<void> {
+	public async appendTimer(timer: Timer<T>): Promise<void> {
 		try {
 			await fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
 			return;
 		} catch (e) {
-			throw new Error(`Error when appending timer data: ${e}`);
+			throw new Error(`Error when appending timer data`, { cause: e });
 		}
 	}
 

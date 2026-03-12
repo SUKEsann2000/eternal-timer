@@ -18,6 +18,13 @@ export default defineConfig([
       "comma-dangle": ["error", "always-multiline"],
 
       indent: ["error", "tab", { SwitchCase: 1 }],
+
+      "no-trailing-spaces": [
+        "error",
+        {
+          "skipBlankLines": false,
+        }
+      ]
     },
   })),
 ]);

@@ -39,8 +39,6 @@ async function main() {
     // Monitor timers (executes when timer expires)
     const interval = await manager.checkTimers(async (timer) => {
         console.log('Timer expired:', timer.id, timer.title);
-        // Once the timer expires, you can remove it
-        await manager.removeTimer(timer.id);
     });
 
     // Display all timers
@@ -75,7 +73,6 @@ async function main() {
     // Monitor timers
     const interval = await manager.checkTimers(async (timer) => {
         console.log('Timer expired:', timer.id);
-        await manager.removeTimer(timer.id);
     });
 
     // Display all timers
@@ -100,6 +97,26 @@ main();
 Creates a manager for timers stored in **JSON Lines** format.
 
 - **`timerfiledir`** (optional, string): Path to the timer file. Defaults to `.timers.jsonl` in the project root.
+
+#### `changeTitle(id: string, newTitle: string): Promise<void>`
+Changes the title of an existing timer.
+
+- **`id`**: The ID of the timer to modify.
+- **`newTitle`**: The new title for the timer.
+
+**Returns:** A `Promise<void>` that resolves when the timer's title has been updated.
+
+**Throws:** An error if: the timer with the specified ID is not found, or a file operation fails.
+
+#### `changeDescription(id: string, newDescription: string): Promise<void>`
+Changes the description of an existing timer.
+
+- **`id`**: The ID of the timer to modify.
+- **`newDescription`**: The new description for the timer.
+
+**Returns:** A `Promise<void>` that resolves when the timer's description has been updated.
+
+**Throws:** An error if: the timer with the specified ID is not found, or a file operation fails.
 
 ### `PlainTextTimersManager`
 
@@ -196,7 +213,7 @@ type Timer<T extends StorageType> = {
   stop: number;
 } & (T extends "JSONL"
   ? { title?: string; description?: string }
-  : object);
+  : {});
 ```
 
 ## Scripts

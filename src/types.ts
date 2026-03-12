@@ -1,10 +1,19 @@
 export type StorageType = "JSONL" | "PlainText";
 
-export type Timer<T extends StorageType> = {
-    id: string;
-    start: number;
-    stop: number;
-} & (T extends "JSONL" ? { title?: string; description?: string } : object);
+export type Timer<T extends StorageType> =
+    T extends "JSONL"
+        ? {
+              id: string;
+              start: number;
+              stop: number;
+              title?: string;
+              description?: string;
+          }
+        : {
+              id: string;
+              start: number;
+              stop: number;
+          };
 
 export type CreateTimerOptions<T extends StorageType> = T extends "JSONL"
     ? {
@@ -15,8 +24,3 @@ export type CreateTimerOptions<T extends StorageType> = T extends "JSONL"
     : T extends "PlainText"
       ? number
       : never;
-
-export type TimersManagerOptions = {
-    timerfiledir?: string;
-    disableCache?: boolean;
-} | string;
