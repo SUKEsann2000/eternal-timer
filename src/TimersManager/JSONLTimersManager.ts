@@ -33,6 +33,7 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 				}
 
 				timers[index]!.title = newTitle;
+				await this.TimersStore.saveTimers(timers);
 			} catch (e) {
 				throw new Error(`Error when changing title`, { cause: e });
 			}
@@ -51,6 +52,7 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 				}
 
 				timers[index]!.description = newDescription;
+				await this.TimersStore.saveTimers(timers);
 			} catch (e) {
 				throw new Error(`Error when changing description`, { cause: e });
 			}
