@@ -17,16 +17,9 @@ for (const subDir of subDirs) {
 			fs.renameSync(oldPath, newPath);
 
 			let content = fs.readFileSync(newPath, "utf-8");
-			
-			content = content.replace(
-				/(require\(['"](\.\.?\/[^'"]+))\.js(['"]\))/g,
-				"$1.cjs$3",
-			);
 
-			content = content.replace(
-				/(from ['"](\.\.?\/[^'"]+))\.js(['"])/g,
-				"$1.cjs$3",
-			);
+			content = content.replace(/\.js\b/g, ".cjs");
+
 			fs.writeFileSync(newPath, content, "utf-8");
 		} else if (file.endsWith(".js.map")) {
 			const oldPath = path.join(dir, file);
@@ -36,9 +29,8 @@ for (const subDir of subDirs) {
 			fs.renameSync(oldPath, newPath);
 
 			let content = fs.readFileSync(newPath, "utf-8");
-			
-			content = content.replace(/(require\(['"]\.\/[^'"]+)\.js(['"]\))/g, "$1.cjs$2");
-			content = content.replace(/(from ['"][^'"]+)\.js(['"])/g, "$1.cjs$2");
+
+			content = content.replace(/\.js\b/g, ".cjs");
 			fs.writeFileSync(newPath, content, "utf-8");
 		}
 	}
