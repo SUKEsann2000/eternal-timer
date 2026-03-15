@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "fs/promises";
 
 import type { StorageType, Timer } from "../types.js";
 
@@ -13,7 +13,7 @@ export abstract class TimersStore<T extends StorageType> {
 
 	public async loadTimers(): Promise<Timer<T>[]> {
 		try {
-			const data = await fs.promises.readFile(this.timerfile, "utf-8");
+			const data = await fs.readFile(this.timerfile, "utf-8");
 			const timersData: Timer<T>[] = this.parseTimers(data);
 			await this.checkTimerfileSyntax(timersData);
 			return timersData;
@@ -26,7 +26,7 @@ export abstract class TimersStore<T extends StorageType> {
 		const data = this.toStringifyTimers(timers);
 
 		try {
-			await fs.promises.writeFile(this.timerfile, data, "utf-8");
+			await fs.writeFile(this.timerfile, data, "utf-8");
 		} catch (e) {
 			throw new Error(`Error when saving timer data`, { cause: e });
 		}
@@ -34,7 +34,7 @@ export abstract class TimersStore<T extends StorageType> {
 
 	public async appendTimer(timer: Timer<T>): Promise<void> {
 		try {
-			await fs.promises.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
+			await fs.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
 			return;
 		} catch (e) {
 			throw new Error(`Error when appending timer data`, { cause: e });
