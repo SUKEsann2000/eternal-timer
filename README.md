@@ -219,11 +219,10 @@ type Timer<T extends StorageType> = {
 
 ## Scripts
 
-- `npm run dev`: Run in development mode with nodemon
 - `npm run build`: Compile TypeScript
-- `npm start`: Run compiled JavaScript
 - `npm run test`: Test the compiled code
 - `npm run lint`: Lint all codes
+- `npm run lint:fix`: Lint all codes and fix
 
 ## Storage Formats
 

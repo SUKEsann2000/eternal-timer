@@ -3,10 +3,9 @@
   "version": "2.5.0",
   "description": "timer for node.js package",
   "scripts": {
-    "dev": "nodemon --watch src --exec ts-node src/index.ts",
     "build": "tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node scripts/move-package-json.js",
-    "start": "npm run build && node dist/esm/index.js",
-    "lint": "npx eslint --fix --config ./eslint/eslint.config.ts",
+    "lint": "npx eslint --config ./eslint/eslint.config.ts",
+    "lint:fix": "npx eslint --fix --config ./eslint/eslint.config.ts",
     "test": "npm run build && node test/index.js"
   },
   "repository": {
@@ -31,8 +30,6 @@
     "eslint": "^9.39.2",
     "globals": "^17.0.0",
     "jiti": "^2.6.1",
-    "nodemon": "^3.1.11",
-    "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0"
   },
