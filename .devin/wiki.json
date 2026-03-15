@@ -1,0 +1,202 @@
+{
+  "repo_notes": [
+    {
+      "content": ""
+    }
+  ],
+  "pages": [
+    {
+      "title": "Overview",
+      "purpose": "Introduce the eternal-timer library: what it does (persistent file-backed timers for Node.js), the two storage backends, the key classes, and a map of the codebase.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Quick Start",
+      "purpose": "Provide installation instructions and minimal working examples: creating timers, listening for expiration via checkTimers, and removing timers, for both JSONLTimersManager and PlainTextTimersManager.",
+      "parent": "Overview",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Core API",
+      "purpose": "Serve as the landing page for all public API documentation, listing all exported symbols from src/index.ts and linking to sub-pages for each component.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Type Definitions",
+      "purpose": "Document the three exported types: StorageType ('JSON' | 'PlainText'), the generic Timer<T> type showing how title and description are only present for the JSON variant, and CreateTimerOptions<T> with its conditional structure.",
+      "parent": "Core API",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "TimersManager Base Class",
+      "purpose": "Document the abstract TimersManager<T> class: constructor behavior (file path defaulting via searchRoot, synchronous file creation if missing), protected properties timerfiledir and checkLock, and the abstract method signatures for createTimer, removeTimer, checkTimers, and showTimers.",
+      "parent": "Core API",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "JSONLTimersManager",
+      "purpose": "Fully document JSONLTimersManager: constructor and default file path (.timers.jsonl), createTimer with title/description options, removeTimer (read-filter-rewrite pattern via readline), checkTimers (polling loop with checkLock and awaited callback), showTimers, and checkTimerfileSyntax validation.",
+      "parent": "Core API",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "PlainTextTimersManager",
+      "purpose": "Fully document PlainTextTimersManager: constructor and default file path (.timers), createTimer (length only, no metadata), removeTimer using readline line-by-line processing, checkTimers (polling loop with checkLock), showTimers, and checkTimerfileSyntax for the space-delimited id/start/stop format.",
+      "parent": "Core API",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Storage Formats",
+      "purpose": "Compare and document the two on-disk storage formats: JSONL (one JSON object per line with optional title/description) and plain text (space-separated id/start/stop). Include example file contents, explain when to choose each format, and cover the trade-offs between them.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Internal Utilities",
+      "purpose": "Overview page for the internal helper modules used by the manager implementations, covering the Log class and the searchRoot utility and how they support the manager classes.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Log Utility",
+      "purpose": "Document the Log static class: lazy async initialization via ensureLogger(), the loggerInstance getter returning null when unavailable, integration with the optional @logtape/logtape dependency, and the console warning fallback when the package is not installed.",
+      "parent": "Internal Utilities",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "searchRoot Utility",
+      "purpose": "Document the searchRoot() function: its algorithm of walking up the directory tree from cwd until a package.json is found, its string return value, and where it is called inside TimersManager to resolve the default timer file path.",
+      "parent": "Internal Utilities",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Build and Distribution",
+      "purpose": "Explain the dual-module build system that produces both ESM and CJS outputs from a single TypeScript source, covering build scripts, tsconfig files, the post-build rename step, and how the package.json exports map routes consumers to the correct output.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "TypeScript Configuration",
+      "purpose": "Document the three tsconfig files: the base tsconfig.json (strict mode, nodenext modules, declaration and source map output, incremental cache), tsconfig.esm.json (ESM output override with incremental enabled), and tsconfig.cjs.json (CJS output override with verbatimModuleSyntax disabled and incremental disabled).",
+      "parent": "Build and Distribution",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "CJS Post-Build Rename Script",
+      "purpose": "Document scripts/rename-cjs.js: why .js files in dist/cjs/ must be renamed to .cjs when the package declares type:module, what the script does (readdir, renameSync, rewrite require() and from paths), and its position as the third step in npm run build.",
+      "parent": "Build and Distribution",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Package Exports and Module Resolution",
+      "purpose": "Explain how the package.json exports map, main, module, and types fields route ESM consumers to dist/esm/index.js, CJS consumers to dist/cjs/index.cjs, and TypeScript consumers to dist/esm/index.d.ts. Cover the files array, legacy field fallbacks, and runtime dependencies (uuid, optional @logtape/logtape).",
+      "parent": "Build and Distribution",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "ESLint Configuration",
+      "purpose": "Document the ESLint setup: the typescript-eslint integration, the eslint/tsconfig.json scoping the linter to src files, the custom rules (semi, comma-dangle, indent with tab/SwitchCase), and how jiti enables a TypeScript-format config file without a separate compile step.",
+      "parent": "Build and Distribution",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "CI/CD",
+      "purpose": "Overview of the GitHub Actions workflows that automate testing on every push to main and publishing to npm on version tags, with a summary of how the two workflows relate to each other.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Test Workflow",
+      "purpose": "Document run_test.yml: the push-to-main trigger, the single test job steps (checkout, setup-node 22 with npm cache, npm ci, build, test), and its role as a continuous integration gate.",
+      "parent": "CI/CD",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Publish Workflow",
+      "purpose": "Document publish.yml in detail: the v* tag trigger, the test job as a prerequisite gate for the publish job, the automated lint-fix commit with [skip ci], the linted-vX.X.X tag creation, required permissions (contents:write, id-token:write), and npm publish with provenance attestation.",
+      "parent": "CI/CD",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Testing",
+      "purpose": "Describe the test suite structure: how test/index.js orchestrates both cjs_test (test/test.cjs) and module_test (test/test.mjs), the shared runTest scenario that validates timer creation, callback-based expiration detection, and manual removal against both manager types in both CJS and ESM module contexts.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    }
+  ]
+}
