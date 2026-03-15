@@ -40,7 +40,7 @@
     ".": {
       "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.cjs"
+      "require": "./dist/cjs/index.js"
     }
   },
   "types": "./dist/esm/index.d.ts",
@@ -50,7 +50,7 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/cjs/index.cjs",
+  "main": "./dist/cjs/index.js",
   "optionalDependencies": {
     "@logtape/logtape": "^2.0.0"
   }
