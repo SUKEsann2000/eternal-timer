@@ -2,7 +2,7 @@ import fs from "fs/promises";
 
 import type { StorageType, Timer } from "../types.js";
 
-export abstract class TimersStore<T extends StorageType, Extra extends object> {
+export abstract class TimersStore<T extends StorageType> {
 	protected readonly timerfile: string;
 
 	protected constructor(
@@ -11,10 +11,10 @@ export abstract class TimersStore<T extends StorageType, Extra extends object> {
 		this.timerfile = timerfile;
 	}
 
-	public async loadTimers(): Promise<Timer<T, Extra>[]> {
+	public async loadTimers(): Promise<Timer<T>[]> {
 		try {
 			const data = await fs.readFile(this.timerfile, "utf-8");
-			const timersData: Timer<T, Extra>[] = this.parseTimers(data);
+			const timersData: Timer<T>[] = this.parseTimers(data);
 			await this.checkTimerfileSyntax(timersData);
 			return timersData;
 		} catch (e) {
@@ -22,7 +22,7 @@ export abstract class TimersStore<T extends StorageType, Extra extends object> {
 		}
 	}
 
-	public async saveTimers(timers: Timer<T, Extra>[]): Promise<void> {
+	public async saveTimers(timers: Timer<T>[]): Promise<void> {
 		const data = this.toStringifyTimers(timers);
 
 		try {
@@ -32,7 +32,7 @@ export abstract class TimersStore<T extends StorageType, Extra extends object> {
 		}
 	}
 
-	public async appendTimer(timer: Timer<T, Extra>): Promise<void> {
+	public async appendTimer(timer: Timer<T>): Promise<void> {
 		try {
 			await fs.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
 			return;
@@ -41,7 +41,7 @@ export abstract class TimersStore<T extends StorageType, Extra extends object> {
 		}
 	}
 
-    protected abstract checkTimerfileSyntax(timers: Timer<T, Extra>[]): Promise<void>;
-    public abstract toStringifyTimers(timers: Timer<T, Extra>[]): string;
-	public abstract parseTimers(data: string): Timer<T, Extra>[];
+    protected abstract checkTimerfileSyntax(timers: Timer<T>[]): Promise<void>;
+    public abstract toStringifyTimers(timers: Timer<T>[]): string;
+	public abstract parseTimers(data: string): Timer<T>[];
 }

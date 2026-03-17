@@ -10,7 +10,7 @@ import { PlainTextTimersStore } from "../TimersStore/PlainTextTimersStore.js";
  * - Timers are persisted in a file
  * - Expired timers are detected by polling
  */
-export class PlainTextTimersManager<Extra extends object = {}> extends TimersManager<"PlainText", Extra> {
+export class PlainTextTimersManager extends TimersManager<"PlainText"> {
 	protected override TimersStore: PlainTextTimersStore | null = null;
 
 	protected override getDefaultFilename(): string {

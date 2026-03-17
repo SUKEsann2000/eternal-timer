@@ -10,15 +10,15 @@ import { JSONLTimersStore } from "../TimersStore/JSONLTimersStore.js";
  * - Timers are persisted in a file
  * - Expired timers are detected by polling
  */
-export class JSONLTimersManager<Extra extends object = {}> extends TimersManager<"JSONL", Extra> {
-	protected override TimersStore: JSONLTimersStore<Extra> | null = null;
+export class JSONLTimersManager extends TimersManager<"JSONL"> {
+	protected override TimersStore: JSONLTimersStore | null = null;
 
 	protected override getDefaultFilename(): string {
 		return ".timers.jsonl";
 	}
 
-	protected override async createTimersStore(): Promise<JSONLTimersStore<Extra>> {
-		return new JSONLTimersStore<Extra>(this.timerfiledir);
+	protected override async createTimersStore(): Promise<JSONLTimersStore> {
+		return new JSONLTimersStore(this.timerfiledir);
 	}
 
 	public async changeTitle(id: string, newTitle: string): Promise<void> {

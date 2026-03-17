@@ -3,7 +3,7 @@ import { validate } from "uuid";
 import type { Timer } from "../types.js";
 import { TimersStore } from "./TimersStore.js";
 
-export class PlainTextTimersStore<Extra extends object = {}> extends TimersStore<"PlainText", Extra> {
+export class PlainTextTimersStore extends TimersStore<"PlainText"> {
 
 	constructor(
 		timerfile: string,
@@ -18,7 +18,7 @@ export class PlainTextTimersStore<Extra extends object = {}> extends TimersStore
      * @returns void
      * @throws If syntax is invalid
      */
-	protected override async checkTimerfileSyntax(timers: Timer<"PlainText", Extra>[]): Promise<void> {
+	protected override async checkTimerfileSyntax(timers: Timer<"PlainText">[]): Promise<void> {
 		const throwing = () => {
 			throw new Error(`Timer file's syntax is wrong`);
 		};
@@ -32,14 +32,14 @@ export class PlainTextTimersStore<Extra extends object = {}> extends TimersStore
 		return;
 	}
 
-	public override toStringifyTimers(timers: Timer<"PlainText", Extra>[]): string {
+	public override toStringifyTimers(timers: Timer<"PlainText">[]): string {
 		if (timers.length === 0) {
 			return "";
 		}
 		return timers.map(timer => `${timer.id} ${timer.start} ${timer.stop}`).join("\n");
 	}
 
-	public override parseTimers(data: string): Timer<"PlainText", Extra>[] {
+	public override parseTimers(data: string): Timer<"PlainText">[] {
 		return data
 			.split(/\r?\n/)
 			.filter((line) => line.trim())
@@ -49,7 +49,7 @@ export class PlainTextTimersStore<Extra extends object = {}> extends TimersStore
 					id: id!,
 					start: Number(startStr!),
 					stop: Number(stopStr!),
-				} as Timer<"PlainText", Extra>;
+				} as Timer<"PlainText">;
 			});
 	}
 }
