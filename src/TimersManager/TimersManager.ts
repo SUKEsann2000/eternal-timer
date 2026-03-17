@@ -16,11 +16,11 @@ import { Log } from "../Log.js";
  * - Timers are persisted in a file
  * - Expired timers are detected by polling
  */
-export abstract class TimersManager<T extends StorageType> {
+export abstract class TimersManager<T extends StorageType, Extra extends object> {
 	protected readonly timerfiledir: string;
 	private checkLock: boolean = false;
 
-	protected TimersStore: TimersStore<T> | null = null;
+	protected TimersStore: TimersStore<T, Extra> | null = null;
 
 	private queue: Promise<void> = Promise.resolve();
 	protected runExclusive<T>(fn: () => Promise<T>) {
@@ -30,7 +30,7 @@ export abstract class TimersManager<T extends StorageType> {
 	}
 
 	protected abstract getDefaultFilename(): string;
-	protected abstract createTimersStore(): Promise<TimersStore<T>>;
+	protected abstract createTimersStore(): Promise<TimersStore<T, Extra>>;
 
 	/**
       * constructor
@@ -80,7 +80,7 @@ export abstract class TimersManager<T extends StorageType> {
 			const now = Date.now();
 			const stopTime = now + Math.max(1, length);
 
-			const newTimerData: Timer<T> = {
+			const newTimerData: Timer<T, Extra> = {
 				id,
 				start: now,
 				stop: stopTime,
@@ -132,7 +132,7 @@ export abstract class TimersManager<T extends StorageType> {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-	public async checkTimers(callback: (timer: Timer<T>) => void | Promise<void>, interval: number = 200): Promise<NodeJS.Timeout> {
+	public async checkTimers(callback: (timer: Timer<T, Extra>) => void | Promise<void>, interval: number = 200): Promise<NodeJS.Timeout> {
 
 		this.TimersStore ??= await this.createTimersStore();
 
@@ -148,8 +148,8 @@ export abstract class TimersManager<T extends StorageType> {
 					const allTimers = await this.TimersStore!.loadTimers();
 					const now = Date.now();
 
-					const expired: Timer<T>[] = [];
-					const active: Timer<T>[] = [];
+					const expired: Timer<T, Extra>[] = [];
+					const active: Timer<T, Extra>[] = [];
 
 					for (const timer of allTimers) {
 						if (timer.stop <= now) {
@@ -196,7 +196,7 @@ export abstract class TimersManager<T extends StorageType> {
      * const timers = await manager.showTimers();
      * console.log(JSON.stringify(timers))
      */
-	public async showTimers(): Promise<Timer<T>[]> {
+	public async showTimers(): Promise<Timer<T, Extra>[]> {
 		return this.runExclusive(async () => {
 			this.TimersStore ??= await this.createTimersStore();
 			const timersData = await this.TimersStore.loadTimers();
