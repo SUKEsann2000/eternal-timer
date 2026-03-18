@@ -1,0 +1,186 @@
+diff --git a/src/TimersManager/JSONLTimersManager.ts b/src/TimersManager/JSONLTimersManager.ts
+index 44bd62f..1293a9d 100644
+--- a/src/TimersManager/JSONLTimersManager.ts
++++ b/src/TimersManager/JSONLTimersManager.ts
+@@ -21,7 +21,12 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
+ 		return new JSONLTimersStore(this.timerfiledir);
+ 	}
+ 
+-	public async changeTitle(id: string, newTitle: string): Promise<void> {
++	public async changeExtra(
++		id: string,
++		newExtra: {
++			[key: string]: unknown;
++		}
++	) {
+ 		return this.runExclusive(async () => {
+ 			this.TimersStore ??= await this.createTimersStore();
+ 			try {
+@@ -32,30 +37,11 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
+ 					throw new Error(`Timer with id ${id} not found`);
+ 				}
+ 
+-				timers[index]!.title = newTitle;
++				timers[index]!.extra = newExtra;
+ 				await this.TimersStore.saveTimers(timers);
+ 			} catch (e) {
+ 				throw new Error(`Error when changing title`, { cause: e });
+ 			}
+ 		});
+ 	}
+-
+-	public async changeDescription(id: string, newDescription: string): Promise<void> {
+-		return this.runExclusive(async () => {
+-			this.TimersStore ??= await this.createTimersStore();
+-			try {
+-				const timers = await this.TimersStore.loadTimers();
+-
+-				const index = timers?.findIndex(t => t.id === id);
+-				if (index === -1) {
+-					throw new Error(`Timer with id ${id} not found`);
+-				}
+-
+-				timers[index]!.description = newDescription;
+-				await this.TimersStore.saveTimers(timers);
+-			} catch (e) {
+-				throw new Error(`Error when changing description`, { cause: e });
+-			}
+-		});
+-	}
+ }
+\ No newline at end of file
+diff --git a/src/TimersManager/TimersManager.ts b/src/TimersManager/TimersManager.ts
+index 2c5833b..7cdae1e 100644
+--- a/src/TimersManager/TimersManager.ts
++++ b/src/TimersManager/TimersManager.ts
+@@ -84,8 +84,7 @@ export abstract class TimersManager<T extends StorageType> {
+ 				id,
+ 				start: now,
+ 				stop: stopTime,
+-				...(typeof options === "object" && options.title !== undefined && { title: options.title }),
+-				...(typeof options === "object" && options.description !== undefined && { description: options.description }),
++				...(typeof options === "object" && options.extra !== undefined ? { extra: options.extra } : { extra: {} }),
+ 			};
+ 
+ 			await this.TimersStore.appendTimer(newTimerData);
+diff --git a/src/TimersStore/JSONLTimersStore.ts b/src/TimersStore/JSONLTimersStore.ts
+index 6a40d56..6c9e89c 100644
+--- a/src/TimersStore/JSONLTimersStore.ts
++++ b/src/TimersStore/JSONLTimersStore.ts
+@@ -23,12 +23,11 @@ export class JSONLTimersStore extends TimersStore<"JSONL"> {
+ 			throw new Error(`Timer file's syntax is wrong`);
+ 		};
+ 		for (const timer of timers) {
++			if (Object.keys(timer).length !== 4) throwing();
+ 			if (!timer.id || !validate(timer.id)) throwing();
+ 			if (!timer.start || typeof timer.start !== "number") throwing();
+ 			if (!timer.stop || typeof timer.stop !== "number") throwing();
+ 			if (timer.start > timer.stop) throwing();
+-			if (timer.title && typeof timer.title !== "string") throwing();
+-			if (timer.description && typeof timer.description !== "string") throwing();
+ 		}
+ 	}
+ 
+diff --git a/src/types.ts b/src/types.ts
+index ac83deb..5d48b93 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -6,8 +6,9 @@ export type Timer<T extends StorageType> =
+               id: string;
+               start: number;
+               stop: number;
+-              title?: string;
+-              description?: string;
++              extra: {
++                [key: string]: unknown
++              }
+           }
+         : {
+               id: string;
+@@ -18,8 +19,9 @@ export type Timer<T extends StorageType> =
+ export type CreateTimerOptions<T extends StorageType> = T extends "JSONL"
+     ? {
+           length: number;
+-          title?: string;
+-          description?: string;
++          extra?: {
++            [key: string]: unknown;
++          }
+       } | number
+     : T extends "PlainText"
+       ? number
+diff --git a/test/test.cjs b/test/test.cjs
+index 5b24ae0..5d43e9d 100644
+--- a/test/test.cjs
++++ b/test/test.cjs
+@@ -4,8 +4,8 @@ async function cjs_test() {
+ 	const runTest = async(isJSONL) => {
+ 		const manager = isJSONL ? new JSONLTimersManager("test/.timers.jsonl") : new PlainTextTimersManager("test/.timers");
+ 
+-		const timer1 = isJSONL ? await manager.createTimer({ length: 1000, title: "TestTimer1" , description: "This is test1" }) : await manager.createTimer(1000);
+-		const timer2 = isJSONL ? await manager.createTimer({ length: 1500, title: "TestTimer2", description: "This is test2" }) : await manager.createTimer(1500);
++		const timer1 = isJSONL ? await manager.createTimer({ length: 1000, extra: { title: "TestTimer1" , description: "This is test1" } }) : await manager.createTimer(1000);
++		const timer2 = isJSONL ? await manager.createTimer({ length: 1500, extra: { title: "TestTimer2", description: "This is test2" } }) : await manager.createTimer(1500);
+ 	
+ 		const timersAfterCreate = await manager.showTimers();
+ 	
+@@ -64,20 +64,19 @@ async function cjs_test() {
+ 		}
+ 
+ 		if (isJSONL) {
+-			const timer5 = await manager.createTimer({ length: 5000, title: "TestTitle1", description: "TestDescription1" });
++			const timer5 = await manager.createTimer({ length: 5000, extra: { title: "TestTitle1", description: "TestDescription1" } });
+ 
+-			await manager.changeTitle(timer5, "TestTitle2");
+-			await manager.changeDescription(timer5, "TestDescription2");
++			await manager.changeExtra(timer5, { title: "TestTitle2", description: "TestDescription2" });
+ 
+ 			const changedTimers = await manager.showTimers();
+-			if (changedTimers.find(t => t.id === timer5).title === "TestTitle2") {
++			if (changedTimers.find(t => t.id === timer5).extra.title === "TestTitle2") {
+ 				console.log("✅ Change Title OK");
+ 			} else {
+ 				console.log("❌ Change Title Failed");
+ 				return false;
+ 			}
+ 
+-			if (changedTimers.find(t => t.id === timer5).description === "TestDescription2") {
++			if (changedTimers.find(t => t.id === timer5).extra.description === "TestDescription2") {
+ 				console.log("✅ Change Description OK");
+ 			} else {
+ 				console.log("❌ Change Description Failed");
+diff --git a/test/test.mjs b/test/test.mjs
+index 3dfaf44..72b3be3 100644
+--- a/test/test.mjs
++++ b/test/test.mjs
+@@ -66,25 +66,25 @@ export async function module_test() {
+ 		}
+ 
+ 		if (isJSONL) {
+-			const timer5 = await manager.createTimer({ length: 5000, title: "TestTitle1", description: "TestDescription1" });
++			const timer5 = await manager.createTimer({ length: 5000, extra: { title: "TestTitle1", description: "TestDescription1" } });
+ 
+-			await manager.changeTitle(timer5, "TestTitle2");
+-			await manager.changeDescription(timer5, "TestDescription2");
++			await manager.changeExtra(timer5, { title: "TestTitle2", description: "TestDescription2" });
+ 
+ 			const changedTimers = await manager.showTimers();
+-			if (changedTimers.find(t => t.id === timer5).title === "TestTitle2") {
++			if (changedTimers.find(t => t.id === timer5).extra.title === "TestTitle2") {
+ 				console.log("✅ Change Title OK");
+ 			} else {
+ 				console.log("❌ Change Title Failed");
+ 				return false;
+ 			}
+ 
+-			if (changedTimers.find(t => t.id === timer5).description === "TestDescription2") {
++			if (changedTimers.find(t => t.id === timer5).extra.description === "TestDescription2") {
+ 				console.log("✅ Change Description OK");
+ 			} else {
+ 				console.log("❌ Change Description Failed");
+ 				return false;
+ 			}
++
+ 			await manager.removeTimer(timer5);
+ 		}
+ 

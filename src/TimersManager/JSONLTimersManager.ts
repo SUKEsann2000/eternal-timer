@@ -21,7 +21,12 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 		return new JSONLTimersStore(this.timerfiledir);
 	}
 
-	public async changeTitle(id: string, newTitle: string): Promise<void> {
+	public async changeExtra(
+		id: string,
+		newExtra: {
+			[key: string]: unknown;
+		}
+	) {
 		return this.runExclusive(async () => {
 			this.TimersStore ??= await this.createTimersStore();
 			try {
@@ -32,29 +37,10 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 					throw new Error(`Timer with id ${id} not found`);
 				}
 
-				timers[index]!.title = newTitle;
+				timers[index]!.extra = newExtra;
 				await this.TimersStore.saveTimers(timers);
 			} catch (e) {
 				throw new Error(`Error when changing title`, { cause: e });
-			}
-		});
-	}
-
-	public async changeDescription(id: string, newDescription: string): Promise<void> {
-		return this.runExclusive(async () => {
-			this.TimersStore ??= await this.createTimersStore();
-			try {
-				const timers = await this.TimersStore.loadTimers();
-
-				const index = timers?.findIndex(t => t.id === id);
-				if (index === -1) {
-					throw new Error(`Timer with id ${id} not found`);
-				}
-
-				timers[index]!.description = newDescription;
-				await this.TimersStore.saveTimers(timers);
-			} catch (e) {
-				throw new Error(`Error when changing description`, { cause: e });
 			}
 		});
 	}

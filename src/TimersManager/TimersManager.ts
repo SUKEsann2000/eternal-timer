@@ -84,8 +84,7 @@ export abstract class TimersManager<T extends StorageType> {
 				id,
 				start: now,
 				stop: stopTime,
-				...(typeof options === "object" && options.title !== undefined && { title: options.title }),
-				...(typeof options === "object" && options.description !== undefined && { description: options.description }),
+				...(typeof options === "object" && options.extra !== undefined ? { extra: options.extra } : { extra: {} }),
 			};
 
 			await this.TimersStore.appendTimer(newTimerData);

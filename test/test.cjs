@@ -4,8 +4,8 @@ async function cjs_test() {
 	const runTest = async(isJSONL) => {
 		const manager = isJSONL ? new JSONLTimersManager("test/.timers.jsonl") : new PlainTextTimersManager("test/.timers");
 
-		const timer1 = isJSONL ? await manager.createTimer({ length: 1000, title: "TestTimer1" , description: "This is test1" }) : await manager.createTimer(1000);
-		const timer2 = isJSONL ? await manager.createTimer({ length: 1500, title: "TestTimer2", description: "This is test2" }) : await manager.createTimer(1500);
+		const timer1 = isJSONL ? await manager.createTimer({ length: 1000, extra: { title: "TestTimer1" , description: "This is test1" } }) : await manager.createTimer(1000);
+		const timer2 = isJSONL ? await manager.createTimer({ length: 1500, extra: { title: "TestTimer2", description: "This is test2" } }) : await manager.createTimer(1500);
 	
 		const timersAfterCreate = await manager.showTimers();
 	
@@ -64,20 +64,19 @@ async function cjs_test() {
 		}
 
 		if (isJSONL) {
-			const timer5 = await manager.createTimer({ length: 5000, title: "TestTitle1", description: "TestDescription1" });
+			const timer5 = await manager.createTimer({ length: 5000, extra: { title: "TestTitle1", description: "TestDescription1" } });
 
-			await manager.changeTitle(timer5, "TestTitle2");
-			await manager.changeDescription(timer5, "TestDescription2");
+			await manager.changeExtra(timer5, { title: "TestTitle2", description: "TestDescription2" });
 
 			const changedTimers = await manager.showTimers();
-			if (changedTimers.find(t => t.id === timer5).title === "TestTitle2") {
+			if (changedTimers.find(t => t.id === timer5).extra.title === "TestTitle2") {
 				console.log("✅ Change Title OK");
 			} else {
 				console.log("❌ Change Title Failed");
 				return false;
 			}
 
-			if (changedTimers.find(t => t.id === timer5).description === "TestDescription2") {
+			if (changedTimers.find(t => t.id === timer5).extra.description === "TestDescription2") {
 				console.log("✅ Change Description OK");
 			} else {
 				console.log("❌ Change Description Failed");
