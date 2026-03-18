@@ -40,7 +40,7 @@ export class JSONLTimersManager extends TimersManager<"JSONL"> {
 				timers[index]!.extra = newExtra;
 				await this.TimersStore.saveTimers(timers);
 			} catch (e) {
-				throw new Error(`Error when changing title`, { cause: e });
+				throw new Error(`Error when changing extra`, { cause: e });
 			}
 		});
 	}
