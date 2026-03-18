@@ -1,6 +1,5 @@
 import path from "path";
 import fs from "fs";
-import { v4 as uuidv4 } from "uuid";
 
 import searchRoot from "../searchRoot.js";
 import type { CreateTimerOptions, StorageType, Timer } from "../types.js";
@@ -16,11 +15,11 @@ import { Log } from "../Log.js";
  * - Timers are persisted in a file
  * - Expired timers are detected by polling
  */
-export abstract class TimersManager<T extends StorageType> {
+export abstract class TimersManager<T extends StorageType, Extra extends object> {
 	protected readonly timerfiledir: string;
 	private checkLock: boolean = false;
 
-	protected TimersStore: TimersStore<T> | null = null;
+	protected TimersStore: TimersStore<T, Extra> | null = null;
 
 	private queue: Promise<void> = Promise.resolve();
 	protected runExclusive<T>(fn: () => Promise<T>) {
@@ -30,7 +29,7 @@ export abstract class TimersManager<T extends StorageType> {
 	}
 
 	protected abstract getDefaultFilename(): string;
-	protected abstract createTimersStore(): Promise<TimersStore<T>>;
+	protected abstract createTimersStore(): Promise<TimersStore<T, Extra>>;
 
 	/**
       * constructor
@@ -67,30 +66,7 @@ export abstract class TimersManager<T extends StorageType> {
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-	public async createTimer(options: CreateTimerOptions<T>): Promise<string> {
-		return this.runExclusive(async () => {
-			this.TimersStore ??= await this.createTimersStore();
-
-			let length: number = typeof options === "object" ? options.length : options;
-			if (length < 0) throw new Error(`Invalid length: ${length}`);
-
-			length = Math.trunc(length);
-
-			const id = uuidv4();
-			const now = Date.now();
-			const stopTime = now + Math.max(1, length);
-
-			const newTimerData: Timer<T> = {
-				id,
-				start: now,
-				stop: stopTime,
-				...(typeof options === "object" && options.extra !== undefined ? { extra: options.extra } : { extra: {} }),
-			};
-
-			await this.TimersStore.appendTimer(newTimerData);
-			return id;
-		});
-	}
+	public abstract createTimer(options: CreateTimerOptions<T, Extra>): Promise<string>;
 
 	/**
      * removeTimer
@@ -131,7 +107,7 @@ export abstract class TimersManager<T extends StorageType> {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-	public async checkTimers(callback: (timer: Timer<T>) => void | Promise<void>, interval: number = 200): Promise<NodeJS.Timeout> {
+	public async checkTimers(callback: (timer: Timer<T, Extra>) => void | Promise<void>, interval: number = 200): Promise<NodeJS.Timeout> {
 
 		this.TimersStore ??= await this.createTimersStore();
 
@@ -147,8 +123,8 @@ export abstract class TimersManager<T extends StorageType> {
 					const allTimers = await this.TimersStore!.loadTimers();
 					const now = Date.now();
 
-					const expired: Timer<T>[] = [];
-					const active: Timer<T>[] = [];
+					const expired: Timer<T, Extra>[] = [];
+					const active: Timer<T, Extra>[] = [];
 
 					for (const timer of allTimers) {
 						if (timer.stop <= now) {
@@ -195,7 +171,7 @@ export abstract class TimersManager<T extends StorageType> {
      * const timers = await manager.showTimers();
      * console.log(JSON.stringify(timers))
      */
-	public async showTimers(): Promise<Timer<T>[]> {
+	public async showTimers(): Promise<Timer<T, Extra>[]> {
 		return this.runExclusive(async () => {
 			this.TimersStore ??= await this.createTimersStore();
 			const timersData = await this.TimersStore.loadTimers();
