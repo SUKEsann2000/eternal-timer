@@ -6,8 +6,9 @@ export type Timer<T extends StorageType> =
               id: string;
               start: number;
               stop: number;
-              title?: string;
-              description?: string;
+              extra: {
+                [key: string]: unknown
+              }
           }
         : {
               id: string;
@@ -18,8 +19,9 @@ export type Timer<T extends StorageType> =
 export type CreateTimerOptions<T extends StorageType> = T extends "JSONL"
     ? {
           length: number;
-          title?: string;
-          description?: string;
+          extra?: {
+            [key: string]: unknown;
+          }
       } | number
     : T extends "PlainText"
       ? number
