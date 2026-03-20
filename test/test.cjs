@@ -33,7 +33,7 @@ async function cjs_test() {
 			return false;
 		}
 	
-		const timer3 = await manager.createTimer(5000);
+		const timer3 = isJSONL ? await manager.createTimer({ length: 5000, extra: { title: "TestTimer3" } }) : await manager.createTimer(5000);
 	
 		await manager.removeTimer(timer3);
 		const timersAfterRemove = await manager.showTimers();
@@ -44,7 +44,7 @@ async function cjs_test() {
 			return false;
 		}
 
-		const timer4 = await manager.createTimer(10000);
+		const timer4 = isJSONL ? await manager.createTimer({ length: 10000, extra: { title: "TestTimer4" } }) : await manager.createTimer(10000);
 		await manager.adjustRemainingTime(timer4, -9500);
 
 		let adjustedTimerFinished = false;
