@@ -31,6 +31,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 	protected abstract getDefaultFilename(): string;
 	protected abstract createTimersStore(): Promise<TimersStore<T, Extra>>;
+	protected abstract type: T;
 
 	/**
       * constructor
@@ -71,6 +72,10 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 		return this.runExclusive(async () => {
 			this.TimersStore ??= await this.createTimersStore();
 
+			if (this.type === "JSONL" && typeof options === "number") {
+				throw new Error(`Cannot create timer without extra fields in JSONL`);
+			}
+
 			let length: number = typeof options === "object" ? options.length : options;
 			if (length < 0) throw new Error(`Invalid length: ${length}`);
 
@@ -86,7 +91,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 				stop: stopTime,
 				...(options && typeof options === "object" && options.extra !== undefined
 					? { extra: options.extra }
-					: {}),
+					: {})
 			} as Timer<T, Extra>;
 
 			await this.TimersStore.appendTimer(newTimerData);

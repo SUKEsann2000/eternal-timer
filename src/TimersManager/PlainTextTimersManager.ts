@@ -20,4 +20,6 @@ export class PlainTextTimersManager extends TimersManager<"PlainText", object> {
 	protected async createTimersStore(): Promise<PlainTextTimersStore> {
 		return new PlainTextTimersStore(this.timerfiledir);
 	}
+
+	protected override type: "PlainText" = "PlainText";
 }
