@@ -21,10 +21,22 @@ export class JSONLTimersManager<Extra extends object = {}> extends TimersManager
 		return new JSONLTimersStore(this.timerfiledir);
 	}
 
+	/**
+	 * changeExtra
+	 * @description Change extra field
+	 * @param {string} id 
+	 * @param {Extra} newExtra 
+	 * @returns Promise resolving when the operation is complete
+	 * @throws If timer with id not found or file operation fails
+	 * @example
+	 * const timer = await manager.createTimer({ length: 1000, extra: {author: "someone"} });
+	 * await changeExtra(timer, {author: "SUKEsann2000"});
+	 * // extra is changed and author will be "SUKEsann2000" instead of "someone"
+	 */
 	public async changeExtra(
 		id: string,
 		newExtra: Extra
-	) {
+	): Promise<void> {
 		return this.runExclusive(async () => {
 			this.TimersStore ??= await this.createTimersStore();
 			try {

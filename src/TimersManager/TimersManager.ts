@@ -35,7 +35,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	/**
       * constructor
       * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created.
-      * @param options (TimersManagerOptions | string, optional) Configuration object or timer file path. If a string is provided, it is treated as the timer file path. If an object is provided, `timerfiledir` can be specified.
+      * @param {string} [options] (string, optional) Configuration timer file path and it is treated as the timer file path.
       * @throws If file access or creation fails
       * @example
       * const manager = new TimersManager(); // Uses default timer file path
@@ -59,7 +59,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	/**
      * createTimer
      * @description Creates a new timer.
-     * @param length Timer duration in milliseconds
+     * @param {{length: number, extra: Extra} | number} options Timer duration in milliseconds and extra field(only JSONL)
      * @returns Promise that resolves to the timer ID (UUID)
      * @throws If length is invalid(e.g. length < 0) or file operation fails
      * @example
@@ -67,17 +67,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-		/**
-	 * createTimer
-	 * @description Creates a new timer.
-	 * @param length Timer duration in milliseconds
-	 * @returns Promise that resolves to the timer ID (UUID)
-	 * @throws If length is invalid(e.g. length < 0) or file operation fails
-	 * @example
-	 * const manager = new TimersManager();
-	 * const newTimer = await manager.createTimer(5000);
-	 * // newTimer will be id of the timer
-	 */
 	public async createTimer(options: CreateTimerOptions<T, Extra>): Promise<string> {
 		return this.runExclusive(async () => {
 			this.TimersStore ??= await this.createTimersStore();
@@ -106,8 +95,8 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	/**
      * removeTimer
      * @description Removes a timer by ID.
-     * @param id ID of the timer to remove
-     * @returns void
+     * @param {string} id ID of the timer to remove
+     * @returns Promise resolving when the operation is complete
      * @throws If file operation fails
      * @example
      * await manager.removeTimer(id);
@@ -133,10 +122,10 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
  	 * @description Starts monitoring timers at the specified interval.
      * When a timer expires, the provided `callback` is invoked with the timer.
 	 * The callback is awaited before the next processing cycle continues.
-     * @param callback Function invoked when an expired timer is detected (called asynchronously)
-     * @param interval (number, optional): Check interval in milliseconds (default: 200ms)
+     * @param {(timer: Timer<T, Extra>) => void | Promise<void>} callback Function invoked when an expired timer is detected (called asynchronously)
+     * @param {number} [interval=200] (number, optional): Check interval in milliseconds (default: 200ms)
      * @throws If file operation fails
-	 * @returns (Promise<NodeJS.Timeout>) intervalId interval id of checkTimers
+	 * @returns {Promise<NodeJS.Timeout>} intervalId interval id of checkTimers
      * @example
      * const interval = await manager.checkTimers((timer) => {
      *     console.log(`A timer was stopped: ${timer.id}`);
@@ -217,8 +206,8 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	/**
       * adjustRemainingTime
       * @description Adjusts the remaining time of a timer.
-      * @param id ID of the timer to modify
-      * @param delay Delay in milliseconds to add/subtract from the remaining time
+      * @param {string} id ID of the timer to modify
+      * @param {number} delay Delay in milliseconds to add/subtract from the remaining time
       * @returns Promise resolving when the operation is complete
       * @throws If file operation fails
       */
