@@ -24,7 +24,7 @@ You can choose between two manager classes depending on the desired storage form
 
 ### `JSONLTimersManager` (JSON Lines)
 
-Use this manager to store timers in a `.jsonl` file, which allows for storing `title` and `description`.
+Use this manager to store timers in a `.jsonl` file, which allows for storing `extra` data.
 
 ```javascript
 import { JSONLTimersManager } from 'eternal-timer';
@@ -34,12 +34,12 @@ async function main() {
     const manager = new JSONLTimersManager();
 
     // Create a timer (5 seconds) with a title and description
-    const timerId = await manager.createTimer({length: 5000, title: 'My Timer', description: 'This is a test timer.'});
+    const timerId = await manager.createTimer({length: 5000, extra: { title: 'My Timer', description: 'This is a test timer.' }});
     console.log('Timer created:', timerId);
 
     // Monitor timers (executes when timer expires)
     const interval = await manager.checkTimers(async (timer) => {
-        console.log('Timer expired:', timer.id, timer.title);
+        console.log('Timer expired:', timer.id, timer.extra?.title);
     });
 
     // Display all timers
@@ -99,25 +99,57 @@ Creates a manager for timers stored in **JSON Lines** format.
 
 - **`timerfiledir`** (optional, string): Path to the timer file. Defaults to `.timers.jsonl` in the project root.
 
-#### `changeTitle(id: string, newTitle: string): Promise<void>`
-Changes the title of an existing timer.
+#### `changeExtra(id: string, newExtra: Extra): Promise<void>`
+Changes the `extra` data of an existing timer.
 
 - **`id`**: The ID of the timer to modify.
-- **`newTitle`**: The new title for the timer.
+- **`newExtra`**: The new `extra` object for the timer.
 
-**Returns:** A `Promise<void>` that resolves when the timer's title has been updated.
+**Returns:** A `Promise<void>` that resolves when the timer's `extra` data has been updated.
 
 **Throws:** An error if: the timer with the specified ID is not found, or a file operation fails.
 
-#### `changeDescription(id: string, newDescription: string): Promise<void>`
-Changes the description of an existing timer.
+#### Using the `Extra` Type Parameter
 
-- **`id`**: The ID of the timer to modify.
-- **`newDescription`**: The new description for the timer.
+The `JSONLTimersManager` is a generic class that accepts a type parameter `Extra`. This allows you to define the structure of the `extra` object that will be stored with your timers. By default, `Extra` is an empty object `{}`.
 
-**Returns:** A `Promise<void>` that resolves when the timer's description has been updated.
+**Example:** Defining and using a custom `Extra` type
 
-**Throws:** An error if: the timer with the specified ID is not found, or a file operation fails.
+```typescript
+import { JSONLTimersManager } from 'eternal-timer';
+
+interface MyTimerExtra {
+  title?: string;
+  description?: string;
+  category?: string;
+}
+
+async function main() {
+    // Specify MyTimerExtra as the type argument for JSONLTimersManager
+    const manager = new JSONLTimersManager<MyTimerExtra>();
+
+    // Create a timer with custom extra data
+    const timerId = await manager.createTimer({
+        length: 10000,
+        extra: {
+            title: 'Project Alpha Deadline',
+            description: 'Final submission for project Alpha.',
+            category: 'Work'
+        }
+    });
+    console.log('Timer created:', timerId);
+
+    // Retrieve and access the custom extra data
+    const timers = await manager.showTimers();
+    const myTimer = timers.find(t => t.id === timerId);
+    if (myTimer) {
+        console.log('Timer title:', myTimer.extra?.title);
+        console.log('Timer category:', myTimer.extra?.category);
+    }
+}
+
+main();
+```
 
 ### `PlainTextTimersManager`
 
@@ -140,13 +172,9 @@ Creates a new timer and saves it to the file.
   - `number` — Timer duration in milliseconds.
 
   When using `"JSONL"` storage:
-  - `{ length: number; title?: string; description?: string }`
+  - `{ length: number; extra?: Extra }`
     - `length` (number): Timer duration in milliseconds.
-    - `title` (optional, string): A title for the timer.
-    - `description` (optional, string): A description for the timer.
-
-  - `number` — Timer duration in milliseconds.  
-    ⚠ Not recommended. See [Storage Formats](#storage-formats).
+    - `extra` (optional, Extra): An object containing arbitrary user-defined metadata.
 
 **Returns** A `Promise<string>` that resolves to the timer's unique ID (UUID).
 
@@ -208,14 +236,15 @@ type StorageType = "JSONL" | "PlainText"
 The `Timer` object has the following structure:
 
 ```typescript
-type Timer<T extends StorageType> = {
+type Timer<T extends StorageType, Extra extends object> = {
   id: string;
   start: number;
   stop: number;
 } & (T extends "JSONL"
-  ? { title?: string; description?: string }
+  ? { extra: Extra }
   : {});
 ```
+`Extra` is a generic type parameter that represents an object containing arbitrary user-defined metadata for JSONL timers. For example, it can be `{ title?: string; description?: string }`.
 
 ## Scripts
 
