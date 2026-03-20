@@ -21,7 +21,7 @@ export class JSONLTimersManager<Extra extends object = object> extends TimersMan
 		return new JSONLTimersStore(this.timerfiledir);
 	}
 
-	protected override type: "JSONL" = "JSONL";
+	protected override type: "JSONL" = "JSONL" as const;
 
 	/**
 	 * changeExtra
