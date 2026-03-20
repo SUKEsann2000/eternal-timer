@@ -6,7 +6,7 @@ export type Timer<T extends StorageType, Extra extends object> =
               id: string;
               start: number;
               stop: number;
-              extra: Extra | Record<string, never>
+              extra: Extra
           }
         : {
               id: string;
