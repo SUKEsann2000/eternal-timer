@@ -28,7 +28,7 @@ export class JSONLTimersStore<Extra extends object> extends TimersStore<"JSONL",
 			if (!timer.start || typeof timer.start !== "number") throwing();
 			if (!timer.stop || typeof timer.stop !== "number") throwing();
 			if (timer.start > timer.stop) throwing();
-			if (!timer.extra || typeof timer !== "object") throwing();
+			if (!timer.extra || typeof timer.extra !== "object") throwing();
 		}
 	}
 
