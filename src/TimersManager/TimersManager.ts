@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import { v4 as uuidv4 } from "uuid";
 
 import searchRoot from "../searchRoot.js";
 import type { CreateTimerOptions, StorageType, Timer } from "../types.js";
@@ -66,7 +67,41 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-	public abstract createTimer(options: CreateTimerOptions<T, Extra>): Promise<string>;
+		/**
+	 * createTimer
+	 * @description Creates a new timer.
+	 * @param length Timer duration in milliseconds
+	 * @returns Promise that resolves to the timer ID (UUID)
+	 * @throws If length is invalid(e.g. length < 0) or file operation fails
+	 * @example
+	 * const manager = new TimersManager();
+	 * const newTimer = await manager.createTimer(5000);
+	 * // newTimer will be id of the timer
+	 */
+	public async createTimer(options: CreateTimerOptions<T, Extra>): Promise<string> {
+		return this.runExclusive(async () => {
+			this.TimersStore ??= await this.createTimersStore();
+
+			let length: number = typeof options === "object" ? options.length : options;
+			if (length < 0) throw new Error(`Invalid length: ${length}`);
+
+			length = Math.trunc(length);
+
+			const id = uuidv4();
+			const now = Date.now();
+			const stopTime = now + Math.max(1, length);
+
+			const newTimerData: Timer<T, Extra> = {
+				id,
+				start: now,
+				stop: stopTime,
+				...(typeof options === "object" && options.extra !== undefined ? { extra: options.extra } : { extra: {} })
+			};
+
+			await this.TimersStore.appendTimer(newTimerData);
+			return id;
+		});
+	}
 
 	/**
      * removeTimer
