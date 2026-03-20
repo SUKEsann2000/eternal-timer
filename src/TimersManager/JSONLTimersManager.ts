@@ -10,23 +10,35 @@ import { JSONLTimersStore } from "../TimersStore/JSONLTimersStore.js";
  * - Timers are persisted in a file
  * - Expired timers are detected by polling
  */
-export class JSONLTimersManager extends TimersManager<"JSONL"> {
-	protected override TimersStore: JSONLTimersStore | null = null;
+export class JSONLTimersManager<Extra extends object = object> extends TimersManager<"JSONL", Extra> {
+	protected override TimersStore: JSONLTimersStore<Extra> | null = null;
 
 	protected override getDefaultFilename(): string {
 		return ".timers.jsonl";
 	}
 
-	protected override async createTimersStore(): Promise<JSONLTimersStore> {
+	protected override async createTimersStore(): Promise<JSONLTimersStore<Extra>> {
 		return new JSONLTimersStore(this.timerfiledir);
 	}
 
+	protected override type: "JSONL" = "JSONL";
+
+	/**
+	 * changeExtra
+	 * @description Change extra field
+	 * @param {string} id
+	 * @param {Extra} newExtra
+	 * @returns Promise resolving when the operation is complete
+	 * @throws If timer with id not found or file operation fails
+	 * @example
+	 * const timer = await manager.createTimer({ length: 1000, extra: {author: "someone"} });
+	 * await changeExtra(timer, {author: "SUKEsann2000"});
+	 * // extra is changed and author will be "SUKEsann2000" instead of "someone"
+	 */
 	public async changeExtra(
 		id: string,
-		newExtra: {
-			[key: string]: unknown;
-		}
-	) {
+		newExtra: Extra,
+	): Promise<void> {
 		return this.runExclusive(async () => {
 			this.TimersStore ??= await this.createTimersStore();
 			try {

@@ -16,11 +16,11 @@ import { Log } from "../Log.js";
  * - Timers are persisted in a file
  * - Expired timers are detected by polling
  */
-export abstract class TimersManager<T extends StorageType> {
+export abstract class TimersManager<T extends StorageType, Extra extends object> {
 	protected readonly timerfiledir: string;
 	private checkLock: boolean = false;
 
-	protected TimersStore: TimersStore<T> | null = null;
+	protected TimersStore: TimersStore<T, Extra> | null = null;
 
 	private queue: Promise<void> = Promise.resolve();
 	protected runExclusive<T>(fn: () => Promise<T>) {
@@ -30,12 +30,13 @@ export abstract class TimersManager<T extends StorageType> {
 	}
 
 	protected abstract getDefaultFilename(): string;
-	protected abstract createTimersStore(): Promise<TimersStore<T>>;
+	protected abstract createTimersStore(): Promise<TimersStore<T, Extra>>;
+	protected abstract type: T;
 
 	/**
       * constructor
       * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created.
-      * @param options (TimersManagerOptions | string, optional) Configuration object or timer file path. If a string is provided, it is treated as the timer file path. If an object is provided, `timerfiledir` can be specified.
+      * @param {string} [options] (string, optional) Configuration timer file path and it is treated as the timer file path.
       * @throws If file access or creation fails
       * @example
       * const manager = new TimersManager(); // Uses default timer file path
@@ -59,7 +60,7 @@ export abstract class TimersManager<T extends StorageType> {
 	/**
      * createTimer
      * @description Creates a new timer.
-     * @param length Timer duration in milliseconds
+     * @param {{length: number, extra: Extra} | number} options Timer duration in milliseconds and extra field(only JSONL)
      * @returns Promise that resolves to the timer ID (UUID)
      * @throws If length is invalid(e.g. length < 0) or file operation fails
      * @example
@@ -67,9 +68,13 @@ export abstract class TimersManager<T extends StorageType> {
      * const newTimer = await manager.createTimer(5000);
      * // newTimer will be id of the timer
      */
-	public async createTimer(options: CreateTimerOptions<T>): Promise<string> {
+	public async createTimer(options: CreateTimerOptions<T, Extra>): Promise<string> {
 		return this.runExclusive(async () => {
 			this.TimersStore ??= await this.createTimersStore();
+
+			if (this.type === "JSONL" && typeof options === "number") {
+				throw new Error(`Cannot create timer without extra fields in JSONL`);
+			}
 
 			let length: number = typeof options === "object" ? options.length : options;
 			if (length < 0) throw new Error(`Invalid length: ${length}`);
@@ -80,12 +85,14 @@ export abstract class TimersManager<T extends StorageType> {
 			const now = Date.now();
 			const stopTime = now + Math.max(1, length);
 
-			const newTimerData: Timer<T> = {
+			const newTimerData: Timer<T, Extra> = {
 				id,
 				start: now,
 				stop: stopTime,
-				...(typeof options === "object" && options.extra !== undefined ? { extra: options.extra } : { extra: {} }),
-			};
+				...(options && typeof options === "object" && options.extra !== undefined
+					? { extra: options.extra }
+					: {})
+			} as Timer<T, Extra>;
 
 			await this.TimersStore.appendTimer(newTimerData);
 			return id;
@@ -95,8 +102,8 @@ export abstract class TimersManager<T extends StorageType> {
 	/**
      * removeTimer
      * @description Removes a timer by ID.
-     * @param id ID of the timer to remove
-     * @returns void
+     * @param {string} id ID of the timer to remove
+     * @returns Promise resolving when the operation is complete
      * @throws If file operation fails
      * @example
      * await manager.removeTimer(id);
@@ -122,16 +129,16 @@ export abstract class TimersManager<T extends StorageType> {
  	 * @description Starts monitoring timers at the specified interval.
      * When a timer expires, the provided `callback` is invoked with the timer.
 	 * The callback is awaited before the next processing cycle continues.
-     * @param callback Function invoked when an expired timer is detected (called asynchronously)
-     * @param interval (number, optional): Check interval in milliseconds (default: 200ms)
+     * @param {(timer: Timer<T, Extra>) => void | Promise<void>} callback Function invoked when an expired timer is detected (called asynchronously)
+     * @param {number} [interval=200] (number, optional): Check interval in milliseconds (default: 200ms)
      * @throws If file operation fails
-	 * @returns (Promise<NodeJS.Timeout>) intervalId interval id of checkTimers
+	 * @returns {Promise<NodeJS.Timeout>} intervalId interval id of checkTimers
      * @example
      * const interval = await manager.checkTimers((timer) => {
      *     console.log(`A timer was stopped: ${timer.id}`);
      * });
      */
-	public async checkTimers(callback: (timer: Timer<T>) => void | Promise<void>, interval: number = 200): Promise<NodeJS.Timeout> {
+	public async checkTimers(callback: (timer: Timer<T, Extra>) => void | Promise<void>, interval: number = 200): Promise<NodeJS.Timeout> {
 
 		this.TimersStore ??= await this.createTimersStore();
 
@@ -147,8 +154,8 @@ export abstract class TimersManager<T extends StorageType> {
 					const allTimers = await this.TimersStore!.loadTimers();
 					const now = Date.now();
 
-					const expired: Timer<T>[] = [];
-					const active: Timer<T>[] = [];
+					const expired: Timer<T, Extra>[] = [];
+					const active: Timer<T, Extra>[] = [];
 
 					for (const timer of allTimers) {
 						if (timer.stop <= now) {
@@ -195,7 +202,7 @@ export abstract class TimersManager<T extends StorageType> {
      * const timers = await manager.showTimers();
      * console.log(JSON.stringify(timers))
      */
-	public async showTimers(): Promise<Timer<T>[]> {
+	public async showTimers(): Promise<Timer<T, Extra>[]> {
 		return this.runExclusive(async () => {
 			this.TimersStore ??= await this.createTimersStore();
 			const timersData = await this.TimersStore.loadTimers();
@@ -206,8 +213,8 @@ export abstract class TimersManager<T extends StorageType> {
 	/**
       * adjustRemainingTime
       * @description Adjusts the remaining time of a timer.
-      * @param id ID of the timer to modify
-      * @param delay Delay in milliseconds to add/subtract from the remaining time
+      * @param {string} id ID of the timer to modify
+      * @param {number} delay Delay in milliseconds to add/subtract from the remaining time
       * @returns Promise resolving when the operation is complete
       * @throws If file operation fails
       */
