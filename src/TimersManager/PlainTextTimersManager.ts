@@ -21,5 +21,5 @@ export class PlainTextTimersManager extends TimersManager<"PlainText", object> {
 		return new PlainTextTimersStore(this.timerfiledir);
 	}
 
-	protected override type: "PlainText" = "PlainText";
+	protected override type: "PlainText" = "PlainText" as const;
 }
