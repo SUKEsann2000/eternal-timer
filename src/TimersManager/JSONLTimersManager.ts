@@ -1,5 +1,8 @@
+import type { ZodType } from "zod";
+
 import { TimersManager } from "./TimersManager.js";
 import { JSONLTimersStore } from "../TimersStore/JSONLTimersStore.js";
+import { TimerZod } from "src/zod.js";
 
 /**
  * JSONLTimersManager
@@ -12,6 +15,8 @@ import { JSONLTimersStore } from "../TimersStore/JSONLTimersStore.js";
  */
 export class JSONLTimersManager<Extra extends object = object> extends TimersManager<"JSONL", Extra> {
 	protected override TimersStore: JSONLTimersStore<Extra> | null = null;
+	private zod: typeof import("zod") | null = null;
+
 
 	protected override getDefaultFilename(): string {
 		return ".timers.jsonl";

@@ -49,6 +49,7 @@
   ],
   "main": "./dist/cjs/index.js",
   "optionalDependencies": {
-    "@logtape/logtape": "^2.0.0"
+    "@logtape/logtape": "^2.0.0",
+    "zod": "^4.3.6"
   }
 }
