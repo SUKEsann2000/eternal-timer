@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 
 import type { StorageType, Timer } from "../types.js";
+import { throwMessage } from "src/throwMessage.js";
 
 export abstract class TimersStore<T extends StorageType, Extra extends object> {
 	protected readonly timerfile: string;
@@ -18,7 +19,7 @@ export abstract class TimersStore<T extends StorageType, Extra extends object> {
 			await this.checkTimerfileSyntax(timersData);
 			return timersData;
 		} catch (e) {
-			throw new Error("Error when loading timer data", { cause: e });
+			throw new Error(throwMessage.LoadTimerData, { cause: e });
 		}
 	}
 
@@ -28,7 +29,7 @@ export abstract class TimersStore<T extends StorageType, Extra extends object> {
 		try {
 			await fs.writeFile(this.timerfile, data, "utf-8");
 		} catch (e) {
-			throw new Error(`Error when saving timer data`, { cause: e });
+			throw new Error(throwMessage.SaveTimerData, { cause: e });
 		}
 	}
 
@@ -37,7 +38,7 @@ export abstract class TimersStore<T extends StorageType, Extra extends object> {
 			await fs.appendFile(this.timerfile, this.toStringifyTimers([timer]) + "\n");
 			return;
 		} catch (e) {
-			throw new Error(`Error when appending timer data`, { cause: e });
+			throw new Error(throwMessage.AppendTimerData, { cause: e });
 		}
 	}
 

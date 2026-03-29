@@ -6,6 +6,7 @@ import searchRoot from "../searchRoot.js";
 import type { CreateTimerOptions, StorageType, Timer } from "../types.js";
 import { TimersStore } from "../TimersStore/TimersStore.js";
 import { EventEmitter } from "../EventEmitter.js";
+import { throwMessage } from "src/throwMessage.js";
 
 /**
  * TimersManager
@@ -49,7 +50,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 		const rootDir = searchRoot();
 		this.timerfiledir = path.resolve(rootDir, timerfile ?? this.getDefaultFilename());
 		if (!this.timerfiledir.startsWith(rootDir)) {
-			throw new Error(`Timer file path must be within the project directory`);
+			throw new Error(throwMessage.FilePathinvalid);
 		}
 		try {
 			fs.accessSync(this.timerfiledir);
@@ -78,11 +79,11 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 			this.TimersStore ??= await this.createTimersStore();
 
 			if (this.type === "JSONL" && typeof options === "number") {
-				throw new Error(`Cannot create timer without extra fields in JSONL`);
+				throw new Error(throwMessage.NoExtra);
 			}
 
 			let length: number = typeof options === "object" ? options.length : options;
-			if (length < 0) throw new Error(`Invalid length: ${length}`);
+			if (length < 0) throw new Error(throwMessage.InvalidLength(length));
 
 			length = Math.trunc(length);
 
@@ -121,7 +122,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 			const index = timers.findIndex(t => t.id === id);
 			if (index === -1 || timers[index] === undefined) {
-				throw new Error(`Timer with id ${id} not found`);
+				throw new Error(throwMessage.NotFound(id));
 			}
 
 			timers.splice(index, 1);
@@ -228,7 +229,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 			const index = timers.findIndex(t => t.id === id);
 			if (index === -1 || timers[index] === undefined) {
-				throw new Error(`Timer with id ${id} not found`);
+				throw new Error(throwMessage.NotFound(id));
 			}
 
 			const old = { ...timers[index] };

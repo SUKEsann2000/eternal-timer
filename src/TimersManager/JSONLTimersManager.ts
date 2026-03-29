@@ -1,5 +1,6 @@
 import { TimersManager } from "./TimersManager.js";
 import { JSONLTimersStore } from "../TimersStore/JSONLTimersStore.js";
+import { throwMessage } from "src/throwMessage.js";
 
 /**
  * JSONLTimersManager
@@ -46,7 +47,7 @@ export class JSONLTimersManager<Extra extends object = object> extends TimersMan
 
 				const index = timers?.findIndex(t => t.id === id);
 				if (index === -1 || timers[index] === undefined) {
-					throw new Error(`Timer with id ${id} not found`);
+					throw new Error(throwMessage.NotFound(id));
 				}
 
 				const old = { ...timers[index] };
@@ -55,7 +56,7 @@ export class JSONLTimersManager<Extra extends object = object> extends TimersMan
 				await this.TimersStore.saveTimers(timers);
 				await this.emit("updated", { old, new: timers[index] });
 			} catch (e) {
-				throw new Error(`Error when changing extra`, { cause: e });
+				throw new Error(throwMessage.ChangeExtra, { cause: e });
 			}
 		});
 	}

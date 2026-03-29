@@ -2,6 +2,7 @@ import { validate } from "uuid";
 
 import type { Timer } from "../types.js";
 import { TimersStore } from "./TimersStore.js";
+import { throwMessage } from "src/throwMessage.js";
 
 export class PlainTextTimersStore extends TimersStore<"PlainText", object> {
 
@@ -20,7 +21,7 @@ export class PlainTextTimersStore extends TimersStore<"PlainText", object> {
      */
 	protected override async checkTimerfileSyntax(timers: Timer<"PlainText", object>[]): Promise<void> {
 		const throwing = () => {
-			throw new Error(`Timer file's syntax is wrong`);
+			throw new Error(throwMessage.InvalidSyntax);
 		};
 		for (const timer of timers) {
 			if (Object.keys(timer).length !== 3) throwing();
