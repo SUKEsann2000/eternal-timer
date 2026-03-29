@@ -18,14 +18,17 @@ async function cjs_test() {
 			console.log("❌ Creating Timer Failed");
 			return false;
 		}
-	
+
 		const finishedTimers = [];
-		const interval = await manager.checkTimers(async (timer) => {
+		const expiredListener = (timer) => {
 			finishedTimers.push(timer.id);
-		});
+		};
+		manager.on("expired", expiredListener);
+		const checkInterval = await manager.checkStart(100);
 		await new Promise(resolve => setTimeout(resolve, 2000));
-		clearInterval(interval);
-	
+		clearInterval(checkInterval);
+		manager.off("expired", expiredListener);
+
 		if (finishedTimers.includes(timer1) && finishedTimers.includes(timer2) && finishedTimers.length === 2) {
 			console.log("✅ Callback of Timer OK");
 		} else {
@@ -33,6 +36,7 @@ async function cjs_test() {
 			return false;
 		}
 	
+
 		const timer3 = isJSONL ? await manager.createTimer({ length: 5000, extra: { title: "TestTimer3" } }) : await manager.createTimer(5000);
 	
 		await manager.removeTimer(timer3);
@@ -45,16 +49,35 @@ async function cjs_test() {
 		}
 
 		const timer4 = isJSONL ? await manager.createTimer({ length: 10000, extra: { title: "TestTimer4" } }) : await manager.createTimer(10000);
+		
+		let updatedEventTriggered = false;
+		const updatedListener = (updatedTimer) => {
+			if (updatedTimer.id === timer4) {
+				updatedEventTriggered = true;
+			}
+		};
+		manager.on("updated", updatedListener);
+
 		await manager.adjustRemainingTime(timer4, -9500);
+		manager.off("updated", updatedListener);
+		if (!updatedEventTriggered) {
+			console.log("❌ Adjust Remaining Time Failed");
+			return false;
+		} else {
+			console.log("✅ Adjust Remaining Time OK");
+		}
 
 		let adjustedTimerFinished = false;
-		const adjustInterval = await manager.checkTimers(async (timer) => {
+		const expiredListenerForAdjust = (timer) => {
 			if (timer.id === timer4) {
 				adjustedTimerFinished = true;
 			}
-		});
-		await new Promise(resolve => setTimeout(resolve, 1000))
+		};
+		manager.on("expired", expiredListenerForAdjust);
+		const adjustInterval = await manager.checkStart(100);
+		await new Promise(resolve => setTimeout(resolve, 1000));
 		clearInterval(adjustInterval);
+		manager.off("expired", expiredListenerForAdjust);
 
 		if (adjustedTimerFinished) {
 			console.log("✅ Adjust Remaining Time OK");
