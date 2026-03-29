@@ -22,3 +22,17 @@ export type CreateTimerOptions<T extends StorageType, Extra extends object> = T 
     : T extends "PlainText"
       ? number
       : never;
+
+export type TimerEvents<T extends StorageType, Extra extends object> = {
+  expired: Timer<T, Extra>
+  errored: Error
+  interval: void
+  started: Timer<T, Extra>
+  stopped: Timer<T, Extra>
+}
+
+export type ListenerMap<T extends StorageType, Extra extends object> = {
+  [K in keyof TimerEvents<T, Extra>]?: ((
+    payload: TimerEvents<T, Extra>[K]
+  ) => void | Promise<void>)[]
+}

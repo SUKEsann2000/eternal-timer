@@ -3,9 +3,8 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 
 import searchRoot from "../searchRoot.js";
-import type { CreateTimerOptions, StorageType, Timer } from "../types.js";
+import type { CreateTimerOptions, StorageType, Timer, ListenerMap, TimerEvents } from "../types.js";
 import { TimersStore } from "../TimersStore/TimersStore.js";
-import { Log } from "../Log.js";
 
 /**
  * TimersManager
@@ -18,7 +17,7 @@ import { Log } from "../Log.js";
  */
 export abstract class TimersManager<T extends StorageType, Extra extends object> {
 	protected readonly timerfiledir: string;
-	private checkLock: boolean = false;
+	protected checkLock: boolean = false;
 
 	protected TimersStore: TimersStore<T, Extra> | null = null;
 
@@ -95,6 +94,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 			} as Timer<T, Extra>;
 
 			await this.TimersStore.appendTimer(newTimerData);
+			await this.emit("started", newTimerData);
 			return id;
 		});
 	}
@@ -114,43 +114,41 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 			const timers = await this.TimersStore.loadTimers();
 
 			const index = timers.findIndex(t => t.id === id);
-			if (index === -1) {
+			if (index === -1 || timers[index] === undefined) {
 				throw new Error(`Timer with id ${id} not found`);
 			}
 
 			timers.splice(index, 1);
 			await this.TimersStore.saveTimers(timers);
+			await this.emit("stopped", timers[index]);
 			return;
 		});
 	}
 
 	/**
-	 * checkTimers
- 	 * @description Starts monitoring timers at the specified interval.
-     * When a timer expires, the provided `callback` is invoked with the timer.
-	 * The callback is awaited before the next processing cycle continues.
-     * @param {(timer: Timer<T, Extra>) => void | Promise<void>} callback Function invoked when an expired timer is detected (called asynchronously)
-     * @param {number} [interval=200] (number, optional): Check interval in milliseconds (default: 200ms)
-     * @throws If file operation fails
-	 * @returns {Promise<NodeJS.Timeout>} intervalId interval id of checkTimers
-     * @example
-     * const interval = await manager.checkTimers((timer) => {
-     *     console.log(`A timer was stopped: ${timer.id}`);
-     * });
-     */
-	public async checkTimers(callback: (timer: Timer<T, Extra>) => void | Promise<void>, interval: number = 200): Promise<NodeJS.Timeout> {
+	 * checkStart
+	 * @description Starts the timer checking loop. This method should be called once after creating an instance of TimersManager to detect expired timers.
+	 * @param {number} [interval=200] Polling interval in milliseconds (default: 200ms)
+	 * @returns The interval ID which can be used to stop the loop with clearInterval
+	 * @throws If file operation fails during checking
+	 * @example
+	 * const manager = new TimersManager();
+	 * manager.checkStart(1000); // Check for expired timers every 1 second 
+	 */
+	public async checkStart(
+		interval: number = 200
+	): Promise<NodeJS.Timeout> {
 
 		this.TimersStore ??= await this.createTimersStore();
 
 		const loop = async () => {
-			if (this.checkLock) {
-				return;
-			}
-
+			if (this.checkLock) return;
 			this.checkLock = true;
 
+			let expiredTimers: Timer<T, Extra>[] = [];
+
 			try {
-				const expiredTimers = await this.runExclusive(async () => {
+				expiredTimers = await this.runExclusive(async () => {
 					const allTimers = await this.TimersStore!.loadTimers();
 					const now = Date.now();
 
@@ -158,39 +156,97 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 					const active: Timer<T, Extra>[] = [];
 
 					for (const timer of allTimers) {
-						if (timer.stop <= now) {
-							expired.push(timer);
-						} else {
-							active.push(timer);
-						}
+					if (timer.stop <= now) {
+						expired.push(timer);
+					} else {
+						active.push(timer);
+					}
 					}
 
 					if (expired.length > 0) {
-						await this.TimersStore!.saveTimers(active);
+					await this.TimersStore!.saveTimers(active);
 					}
 
 					return expired;
 				});
 
-				for (const timerData of expiredTimers) {
-					try {
-						await callback(timerData);
-					} catch (e) {
-						await Log.ensureLogger();
-						Log.loggerInstance?.error(
-							`Error in callback of checkTimers: ${e}`,
-						);
-					}
-				}
-
 			} catch (e) {
-				await Log.ensureLogger();
-				Log.loggerInstance?.error(`Error when checking timer: ${e}`);
-			} finally {
+				this.emit("errored", e instanceof Error ? e : new Error(String(e))).catch(() => {});
 				this.checkLock = false;
+				return;
 			}
+			for (const timer of expiredTimers) {
+				try {
+					await this.emit("expired", timer);
+				} catch (e) {
+					await this.emit("errored", e instanceof Error ? e : new Error(String(e)));
+				}
+			}
+
+			this.checkLock = false;
 		};
+
 		return setInterval(loop, interval);
+	}
+
+	private listeners: ListenerMap<T, Extra> = {};
+
+	public on<K extends keyof TimerEvents<T, Extra>>(
+		event: K,
+		listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>
+	): void {
+		if (!this.listeners[event]) {
+			this.listeners[event] = [];
+		}
+		this.listeners[event]!.push(listener);
+	}
+
+	public once<K extends keyof TimerEvents<T, Extra>>(
+		event: K,
+		listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>
+	): void {
+		const wrapper = (payload: TimerEvents<T, Extra>[K]) => {
+			this.off(event, wrapper);
+			return listener(payload);
+		};
+		this.on(event, wrapper);
+	}
+
+	public off<K extends keyof TimerEvents<T, Extra>>(
+		event: K,
+		listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>
+	): void {
+		const listeners = this.listeners[event];
+		if (!listeners) return;
+
+		const index = listeners.indexOf(listener);
+		if (index !== -1) {
+			listeners.splice(index, 1);
+		}
+	}
+
+	public async emit<K extends keyof TimerEvents<T, Extra>>(
+		event: K,
+		payload: TimerEvents<T, Extra>[K]
+	): Promise<void> {
+		const listeners = this.listeners[event];
+		if (!listeners?.length) return;
+
+		const errors: unknown[] = [];
+
+		await Promise.all(
+			listeners.map(async l => {
+			try {
+				await l(payload);
+			} catch (e) {
+				errors.push(e);
+			}
+			})
+		);
+
+		if (errors.length > 0) {
+			throw new AggregateError(errors, `Errors in event "${event}"`);
+		}
 	}
 
 	/**
