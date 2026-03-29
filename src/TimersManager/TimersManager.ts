@@ -59,13 +59,17 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	/**
      * createTimer
      * @description Creates a new timer.
-     * @param {{length: number, extra: Extra} | number} options Timer duration in milliseconds and extra field(only JSONL)
+     * @param {CreateTimerOptions<T, Extra>} options Timer duration in milliseconds for PlainText or an object with length and extra for JSONL.
      * @returns Promise that resolves to the timer ID (UUID)
-     * @throws If length is invalid(e.g. length < 0) or file operation fails
+     * @throws If length is invalid (e.g. length < 0) or file operation fails
      * @example
-     * const manager = new TimersManager();
-     * const newTimer = await manager.createTimer(5000);
-     * // newTimer will be id of the timer
+     * // For PlainTextTimersManager
+     * const manager = new PlainTextTimersManager();
+     * const newTimerId = await manager.createTimer(5000); // Create a 5-second timer
+     *
+     * // For JSONLTimersManager
+     * const jsonlManager = new JSONLTimersManager<{ title: string }>();
+     * const jsonlTimerId = await jsonlManager.createTimer({ length: 10000, extra: { title: "My JSONL Timer" } }); // Create a 10-second timer with extra data
      */
 	public async createTimer(options: CreateTimerOptions<T, Extra>): Promise<string> {
 		return this.runExclusive(async () => {
