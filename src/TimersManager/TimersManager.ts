@@ -225,6 +225,12 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 		}
 	}
 
+	public offAll<K extends keyof TimerEvents<T, Extra>>(
+		event: K
+	): void {
+		this.listeners[event] = [];
+	}
+
 	public async emit<K extends keyof TimerEvents<T, Extra>>(
 		event: K,
 		payload: TimerEvents<T, Extra>[K]
