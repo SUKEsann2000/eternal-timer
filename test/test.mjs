@@ -49,12 +49,12 @@ export async function module_test() {
 		}
 
 		const timer4 = isJSONL ? await manager.createTimer({ length: 10000, extra: { title: "TestTimer4" } }) : await manager.createTimer(10000);
-		
+
 		let updatedEventTriggered = false;
 		let resolveUpdatedPromise;
 		const updatedPromise = new Promise(resolve => { resolveUpdatedPromise = resolve; });
 
-		const updatedListener = ({ old, new: updatedTimer }) => {
+		const updatedListener = ({ new: updatedTimer }) => {
 			if (updatedTimer.id === timer4) {
 				updatedEventTriggered = true;
 				resolveUpdatedPromise();

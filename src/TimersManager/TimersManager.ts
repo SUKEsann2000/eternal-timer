@@ -137,10 +137,10 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	 * @throws If file operation fails during checking
 	 * @example
 	 * const manager = new TimersManager();
-	 * manager.checkStart(1000); // Check for expired timers every 1 second 
+	 * manager.checkStart(1000); // Check for expired timers every 1 second
 	 */
 	public async checkStart(
-		interval: number = 200
+		interval: number = 200,
 	): Promise<NodeJS.Timeout> {
 
 		this.TimersStore ??= await this.createTimersStore();
@@ -161,15 +161,15 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 					const active: Timer<T, Extra>[] = [];
 
 					for (const timer of allTimers) {
-					if (timer.stop <= now) {
-						expired.push(timer);
-					} else {
-						active.push(timer);
-					}
+						if (timer.stop <= now) {
+							expired.push(timer);
+						} else {
+							active.push(timer);
+						}
 					}
 
 					if (expired.length > 0) {
-					await this.TimersStore!.saveTimers(active);
+						await this.TimersStore!.saveTimers(active);
 					}
 
 					return expired;
@@ -198,7 +198,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 	public on<K extends keyof TimerEvents<T, Extra>>(
 		event: K,
-		listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>
+		listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>,
 	): void {
 		if (!this.listeners[event]) {
 			this.listeners[event] = [];
@@ -208,7 +208,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 	public once<K extends keyof TimerEvents<T, Extra>>(
 		event: K,
-		listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>
+		listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>,
 	): void {
 		const wrapper = (payload: TimerEvents<T, Extra>[K]) => {
 			this.off(event, wrapper);
@@ -219,7 +219,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 	public off<K extends keyof TimerEvents<T, Extra>>(
 		event: K,
-		listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>
+		listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>,
 	): void {
 		const listeners = this.listeners[event];
 		if (!listeners) return;
@@ -231,14 +231,14 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	}
 
 	public offAll<K extends keyof TimerEvents<T, Extra>>(
-		event: K
+		event: K,
 	): void {
 		this.listeners[event] = [];
 	}
 
 	public async emit<K extends keyof TimerEvents<T, Extra>>(
 		event: K,
-		payload: TimerEvents<T, Extra>[K]
+		payload: TimerEvents<T, Extra>[K],
 	): Promise<void> {
 		const listeners = this.listeners[event];
 		if (!listeners?.length) return;
@@ -247,12 +247,12 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 		await Promise.all(
 			listeners.map(async l => {
-			try {
-				await l(payload);
-			} catch (e) {
-				errors.push(e);
-			}
-			})
+				try {
+					await l(payload);
+				} catch (e) {
+					errors.push(e);
+				}
+			}),
 		);
 
 		if (errors.length > 0) {
