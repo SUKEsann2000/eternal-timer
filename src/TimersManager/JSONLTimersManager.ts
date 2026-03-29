@@ -51,6 +51,7 @@ export class JSONLTimersManager<Extra extends object = object> extends TimersMan
 
 				timers[index]!.extra = newExtra;
 				await this.TimersStore.saveTimers(timers);
+				await this.emit("updated", timers[index]!);
 			} catch (e) {
 				throw new Error(`Error when changing extra`, { cause: e });
 			}

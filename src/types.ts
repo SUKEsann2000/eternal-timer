@@ -29,6 +29,7 @@ export type TimerEvents<T extends StorageType, Extra extends object> = {
   interval: void
   started: Timer<T, Extra>
   stopped: Timer<T, Extra>
+  updated: Timer<T, Extra>
 }
 
 export type ListenerMap<T extends StorageType, Extra extends object> = {

@@ -293,6 +293,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 			timer.stop = now + newRemaining;
 			timers[index] = timer;
 			await this.TimersStore.saveTimers(timers);
+			await this.emit("updated", timer);
 			return;
 		});
 	 }
