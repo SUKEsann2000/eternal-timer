@@ -153,6 +153,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 			try {
 				expiredTimers = await this.runExclusive(async () => {
+					await this.emit("interval", void 0);
 					const allTimers = await this.TimersStore!.loadTimers();
 					const now = Date.now();
 
