@@ -290,7 +290,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 				throw new Error(`Timer with id ${id} not found`);
 			}
 
-			const old = timers[index];
+			const old = { ...timers[index] };
 
 			const now = Date.now();
 
@@ -299,7 +299,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 			const newRemaining = Math.max(0, remaining + delay);
 
 			timer.stop = now + newRemaining;
-			timers[index] = timer;
 			await this.TimersStore.saveTimers(timers);
 			await this.emit("updated", { old, new: timer });
 			return;

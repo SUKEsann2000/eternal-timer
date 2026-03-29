@@ -49,7 +49,7 @@ export class JSONLTimersManager<Extra extends object = object> extends TimersMan
 					throw new Error(`Timer with id ${id} not found`);
 				}
 
-				const old = timers[index];
+				const old = { ...timers[index] };
 
 				timers[index].extra = newExtra;
 				await this.TimersStore.saveTimers(timers);
