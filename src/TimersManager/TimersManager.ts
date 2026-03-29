@@ -3,8 +3,9 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 
 import searchRoot from "../searchRoot.js";
-import type { CreateTimerOptions, StorageType, Timer, ListenerMap, TimerEvents } from "../types.js";
+import type { CreateTimerOptions, StorageType, Timer } from "../types.js";
 import { TimersStore } from "../TimersStore/TimersStore.js";
+import { EventEmitter } from "../EventEmitter.js";
 
 /**
  * TimersManager
@@ -15,7 +16,7 @@ import { TimersStore } from "../TimersStore/TimersStore.js";
  * - Timers are persisted in a file
  * - Expired timers are detected by polling
  */
-export abstract class TimersManager<T extends StorageType, Extra extends object> {
+export abstract class TimersManager<T extends StorageType, Extra extends object> extends EventEmitter<T, Extra> {
 	protected readonly timerfiledir: string;
 	protected checkLock: boolean = false;
 
@@ -44,6 +45,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	constructor(
 		timerfile?: string,
 	) {
+		super();
 		const rootDir = searchRoot();
 		this.timerfiledir = path.resolve(rootDir, timerfile ?? this.getDefaultFilename());
 		if (!this.timerfiledir.startsWith(rootDir)) {
@@ -194,81 +196,15 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 		return setInterval(loop, interval);
 	}
 
-	private listeners: ListenerMap<T, Extra> = {};
-
-	public on<K extends keyof TimerEvents<T, Extra>>(
-		event: K,
-		listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>,
-	): void {
-		if (!this.listeners[event]) {
-			this.listeners[event] = [];
-		}
-		this.listeners[event]!.push(listener);
-	}
-
-	public once<K extends keyof TimerEvents<T, Extra>>(
-		event: K,
-		listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>,
-	): void {
-		const wrapper = (payload: TimerEvents<T, Extra>[K]) => {
-			this.off(event, wrapper);
-			return listener(payload);
-		};
-		this.on(event, wrapper);
-	}
-
-	public off<K extends keyof TimerEvents<T, Extra>>(
-		event: K,
-		listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>,
-	): void {
-		const listeners = this.listeners[event];
-		if (!listeners) return;
-
-		const index = listeners.indexOf(listener);
-		if (index !== -1) {
-			listeners.splice(index, 1);
-		}
-	}
-
-	public offAll<K extends keyof TimerEvents<T, Extra>>(
-		event: K,
-	): void {
-		this.listeners[event] = [];
-	}
-
-	public async emit<K extends keyof TimerEvents<T, Extra>>(
-		event: K,
-		payload: TimerEvents<T, Extra>[K],
-	): Promise<void> {
-		const listeners = this.listeners[event];
-		if (!listeners?.length) return;
-
-		const errors: unknown[] = [];
-
-		await Promise.all(
-			listeners.map(async l => {
-				try {
-					await l(payload);
-				} catch (e) {
-					errors.push(e);
-				}
-			}),
-		);
-
-		if (errors.length > 0) {
-			throw new AggregateError(errors, `Errors in event "${event}"`);
-		}
-	}
-
 	/**
-     * showTimers
-     * @description Retrieves all active timers.
-     * @returns Array of `Timer` objects
-     * @throws If file operation fails
-     * @example
-     * const timers = await manager.showTimers();
-     * console.log(JSON.stringify(timers))
-     */
+		* showTimers
+		* @description Retrieves all active timers.
+		* @returns Array of `Timer` objects
+		* @throws If file operation fails
+		* @example
+		* const timers = await manager.showTimers();
+		* console.log(JSON.stringify(timers))
+		*/
 	public async showTimers(): Promise<Timer<T, Extra>[]> {
 		return this.runExclusive(async () => {
 			this.TimersStore ??= await this.createTimersStore();
