@@ -35,17 +35,17 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	/**
       * constructor
       * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created.
-      * @param {string} [options] (string, optional) Configuration timer file path and it is treated as the timer file path.
+      * @param {string} [timerfile] (string, optional) Configuration timer file path and it is treated as the timer file path.
       * @throws If file access or creation fails
       * @example
       * const manager = new TimersManager(); // Uses default timer file path
       * const manager = new TimersManager("/path/to/timers.txt"); // Uses specified timer file path
       */
 	constructor(
-		options?: string,
+		timerfile?: string,
 	) {
 		const rootDir = searchRoot();
-		this.timerfiledir = path.resolve(rootDir, options ?? this.getDefaultFilename());
+		this.timerfiledir = path.resolve(rootDir, timerfile ?? this.getDefaultFilename());
 		if (!this.timerfiledir.startsWith(rootDir)) {
 			throw new Error(`Timer file path must be within the project directory`);
 		}
