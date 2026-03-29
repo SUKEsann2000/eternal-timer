@@ -8,7 +8,7 @@ A simple and persistent timer library for Node.js. Timers are saved to a file an
 
 ## Features
 
-- **Monitor Timers (asynchronous)**: Start monitoring expired timers asynchronously; the function returns immediately and the callback is called when timers expire.
+- **Monitor Timers (event-driven)**: Start monitoring expired timers and react to events like `expired`, `started`, `stopped`, and `updated` through an event system.
 - **Persistence**: Save timer data to a file that persists across process restarts
 - **Choice of Format**: Choose between JSON Lines for rich data or plain text for lightweight storage.
 
@@ -37,8 +37,11 @@ async function main() {
     const timerId = await manager.createTimer({length: 5000, extra: { title: 'My Timer', description: 'This is a test timer.' }});
     console.log('Timer created:', timerId);
 
-    // Monitor timers (executes when timer expires)
-    const interval = await manager.checkTimers(async (timer) => {
+    // Start monitoring for expired timers
+    const interval = await manager.checkStart();
+
+    // Listen for 'expired' events
+    manager.on('expired', (timer) => {
         console.log('Timer expired:', timer.id, timer.extra?.title);
     });
 
@@ -71,8 +74,11 @@ async function main() {
     const timerId = await manager.createTimer(5000);
     console.log('Timer created:', timerId);
 
-    // Monitor timers
-    const interval = await manager.checkTimers(async (timer) => {
+    // Start monitoring for expired timers
+    const interval = await manager.checkStart();
+
+    // Listen for 'expired' events
+    manager.on('expired', (timer) => {
         console.log('Timer expired:', timer.id);
     });
 
@@ -83,7 +89,7 @@ async function main() {
     // Stop monitoring after a while
     setTimeout(() => {
         clearInterval(interval);
-        console.log('Stopped monitoring timers.');
+        console.log('Stopped monitoring for timers.');
     }, 10000);
 }
 
@@ -160,26 +166,55 @@ Creates a manager for timers stored in **plain-text** format.
 
 ---
 
-### `createTimer(options: CreateTimerOptions<T>): Promise<string>`
+### `createTimer(options: CreateTimerOptions<T, Extra>): Promise<string>`
 
 Creates a new timer and saves it to the file.
 
 #### Parameters
 
-- **`options`**
-
-  When using `"PlainText"` storage:
-  - `number` — Timer duration in milliseconds.
-
-  When using `"JSONL"` storage:
-  - `{ length: number; extra?: Extra }`
-    - `length` (number): Timer duration in milliseconds.
-    - `extra` (optional, Extra): An object containing arbitrary user-defined metadata.
+- **`options`** (`CreateTimerOptions<T, Extra>`)
+  - When using `PlainTextTimersManager` (type `PlainText`):
+    - `number` — The timer's duration in milliseconds.
+  - When using `JSONLTimersManager` (type `JSONL`):
+    - `{ length: number; extra?: Extra }`
+      - `length` (number): The timer's duration in milliseconds.
+      - `extra` (optional, `Extra` object): An object containing arbitrary user-defined metadata for the timer.
 
 **Returns** A `Promise<string>` that resolves to the timer's unique ID (UUID).
 
-**Throws** An error if: `length` is invalid (e.g., negative) or a file operation fails
+**Throws** An error if: `length` is invalid (e.g., negative) or a file operation fails.
 
+**Examples:**
+
+```javascript
+// For PlainTextTimersManager with a custom Extra type
+import { PlainTextTimersManager } from 'eternal-timer';
+
+// For PlainTextTimersManager
+const manager = new PlainTextTimersManager();
+const newTimerId = await manager.createTimer(5000); // Create a 5-second timer
+console.log('Created PlainText timer with ID:', newTimerId);
+```
+
+```typescript
+// For JSONLTimersManager with a custom Extra type
+import { JSONLTimersManager } from 'eternal-timer';
+
+interface MyCustomExtra {
+  purpose: string;
+  userId: string;
+}
+
+const jsonlManager = new JSONLTimersManager<MyCustomExtra>();
+const jsonlTimerId = await jsonlManager.createTimer({
+  length: 10000, // 10 seconds
+  extra: {
+    purpose: "Session Timeout",
+    userId: "user-123"
+  }
+});
+console.log('Created JSONL timer with ID:', jsonlTimerId);
+```
 ### `removeTimer(id: string): Promise<void>`
 
 Removes a timer by its ID.
@@ -190,22 +225,61 @@ Removes a timer by its ID.
 
 **Throws:** An error if the timer with the specified ID is not found or if a file operation fails.
 
-### `checkTimers(callback: (timer: Timer) => void | Promise<void>, interval?: number): Promise<NodeJS.Timeout>`
+### `checkStart(interval?: number): Promise<NodeJS.Timeout>`
 
-Starts monitoring timers at the specified interval and invokes the provided
-`callback` when a timer expires.
+Starts the timer checking loop. This method should be called once after creating an instance of a `TimersManager` to begin detecting expired timers. Events like `expired`, `errored`, `started`, `stopped`, and `updated` are emitted, which can be listened to using the `on` method.
 
-For each expired timer, the `callback` is awaited before processing continues.
-Monitoring runs periodically in the background and can be stopped using the
-returned `NodeJS.Timeout`.
+- **`interval`** (optional, number): Polling interval in milliseconds (default: 200ms)
 
-- **callback**: An async function invoked with the expired `timer`.
-- **interval** *(optional, number)*: Interval in milliseconds for checking timers.
-  Defaults to `200`.
+**Returns:** The interval ID which can be used to stop the loop with `clearInterval()`.
 
-**Returns:** A `NodeJS.Timeout` that can be passed to `clearInterval()` to stop monitoring.
+**Throws:** If file operation fails during checking.
 
-**Throws:** An error if a timer storage operation fails.
+### `on<K extends keyof TimerEvents<T, Extra>>(event: K, listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>): void`
+
+Registers an event listener for a specific timer event.
+
+- **`event`**: The name of the event to listen for (e.g., `'expired'`, `'started'`, `'stopped'`, `'updated'`, `'errored'`).
+- **`listener`**: The callback function to execute when the event is emitted. It receives the event payload as an argument.
+
+**Returns:** `void`
+
+**Example:**
+```javascript
+manager.on('expired', (timer) => {
+    console.log(`Timer ${timer.id} expired!`);
+});
+
+manager.on('errored', (error) => {
+    console.error('Timer event error:', error);
+});
+```
+
+### `once<K extends keyof TimerEvents<T, Extra>>(event: K, listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>): void`
+
+Registers a one-time event listener for a specific timer event. The listener will be invoked only once for the specified event, after which it will be automatically removed.
+
+- **`event`**: The name of the event to listen for.
+- **`listener`**: The callback function to execute when the event is emitted.
+
+**Returns:** `void`
+
+### `off<K extends keyof TimerEvents<T, Extra>>(event: K, listener: (payload: TimerEvents<T, Extra>[K]) => void | Promise<void>): void`
+
+Removes a specific event listener for a given event.
+
+- **`event`**: The name of the event from which to remove the listener.
+- **`listener`**: The listener function to remove.
+
+**Returns:** `void`
+
+### `offAll<K extends keyof TimerEvents<T, Extra>>(event: K): void`
+
+Removes all event listeners for a specific event.
+
+- **`event`**: The name of the event for which to remove all listeners.
+
+**Returns:** `void`
 
 ### `showTimers(): Promise<Timer[]>`
 
@@ -226,6 +300,13 @@ Adjusts the remaining time of a specified timer. This can be used to extend or s
 
 **Throws:** An error if: the timer with the specified ID is not found, the resulting remaining time would be negative, or a file operation fails.
 
+**Example:**
+```javascript
+// Assuming 'timerId' is the ID of an existing timer
+await manager.adjustRemainingTime(timerId, 60000); // Add 1 minute to the timer
+await manager.adjustRemainingTime(timerId, -30000); // Subtract 30 seconds from the timer
+```
+
 ## Type Definition
 
 The `StorageType` has the following structure:
@@ -236,16 +317,45 @@ type StorageType = "JSONL" | "PlainText"
 The `Timer` object has the following structure:
 
 ```typescript
-type Timer<T extends StorageType, Extra extends object> = {
-  id: string;
-  start: number;
-  stop: number;
-} & (T extends "JSONL"
-  ? { extra: Extra }
-  : {});
+type Timer<T extends StorageType, Extra extends object> =
+    T extends "JSONL"
+        ? {
+              id: string;
+              start: number;
+              stop: number;
+              extra: Extra
+          }
+        : {
+              id: string;
+              start: number;
+              stop: number;
+          };
 ```
-`Extra` is a generic type parameter that represents an object containing arbitrary user-defined metadata for JSONL timers. For example, it can be `{ title?: string; description?: string }`.
+`Extra` is a generic type parameter that represents an object containing arbitrary user-defined metadata for JSONL timers. By default, it's `object`. For example, it can be `{ title?: string; description?: string }`.
 
+The `CreateTimerOptions` type is used when creating new timers:
+```typescript
+type CreateTimerOptions<T extends StorageType, Extra extends object> = T extends "JSONL"
+    ? {
+          length: number;
+          extra: Extra
+      }
+    : T extends "PlainText"
+      ? number
+      : never;
+```
+
+The `TimerEvents` type defines the events emitted by `TimersManager`:
+```typescript
+type TimerEvents<T extends StorageType, Extra extends object> = {
+  expired: Timer<T, Extra>
+  errored: Error
+  interval: void
+  started: Timer<T, Extra>
+  stopped: Timer<T, Extra>
+  updated: { old: Timer<T, Extra>, new: Timer<T, Extra> }
+}
+```
 ## Scripts
 
 - `npm run build`: Compile TypeScript
