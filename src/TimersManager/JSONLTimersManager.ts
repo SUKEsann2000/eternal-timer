@@ -45,12 +45,15 @@ export class JSONLTimersManager<Extra extends object = object> extends TimersMan
 				const timers = await this.TimersStore.loadTimers();
 
 				const index = timers?.findIndex(t => t.id === id);
-				if (index === -1) {
+				if (index === -1 || timers[index] === undefined) {
 					throw new Error(`Timer with id ${id} not found`);
 				}
 
-				timers[index]!.extra = newExtra;
+				const old = { ...timers[index] };
+
+				timers[index].extra = newExtra;
 				await this.TimersStore.saveTimers(timers);
+				await this.emit("updated", { old, new: timers[index] });
 			} catch (e) {
 				throw new Error(`Error when changing extra`, { cause: e });
 			}

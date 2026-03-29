@@ -20,12 +20,14 @@ export async function module_test() {
 		}
 
 		const finishedTimers = [];
-		const interval = await manager.checkTimers(async (timer) => {
+		const expiredListener = (timer) => {
 			finishedTimers.push(timer.id);
-		});
+		};
+		manager.on("expired", expiredListener);
+		const checkInterval = await manager.checkStart(100);
 		await new Promise(resolve => setTimeout(resolve, 2000));
-
-		clearInterval(interval);
+		clearInterval(checkInterval);
+		manager.off("expired", expiredListener);
 
 		if (finishedTimers.includes(timer1) && finishedTimers.includes(timer2) && finishedTimers.length === 2) {
 			console.log("✅ Callback of Timer OK");
@@ -47,21 +49,45 @@ export async function module_test() {
 		}
 
 		const timer4 = isJSONL ? await manager.createTimer({ length: 10000, extra: { title: "TestTimer4" } }) : await manager.createTimer(10000);
+
+		let updatedEventTriggered = false;
+		let resolveUpdatedPromise;
+		const updatedPromise = new Promise(resolve => { resolveUpdatedPromise = resolve; });
+
+		const updatedListener = ({ new: updatedTimer }) => {
+			if (updatedTimer.id === timer4) {
+				updatedEventTriggered = true;
+				resolveUpdatedPromise();
+			}
+		};
+		manager.on("updated", updatedListener);
+
 		await manager.adjustRemainingTime(timer4, -9500);
+		await updatedPromise;
+		manager.off("updated", updatedListener);
+		if (!updatedEventTriggered) {
+			console.log("❌ Adjust Remaining Time Failed: Updated event not triggered");
+			return false;
+		} else {
+			console.log("✅ Adjust Remaining Time: Updated event triggered OK");
+		}
 
 		let adjustedTimerFinished = false;
-		const adjustInterval = await manager.checkTimers(async (timer) => {
+		const expiredListenerForAdjust = (timer) => {
 			if (timer.id === timer4) {
 				adjustedTimerFinished = true;
 			}
-		});
+		};
+		manager.on("expired", expiredListenerForAdjust);
+		const adjustInterval = await manager.checkStart(100);
 		await new Promise(resolve => setTimeout(resolve, 1000));
 		clearInterval(adjustInterval);
+		manager.off("expired", expiredListenerForAdjust);
 
 		if (adjustedTimerFinished) {
-			console.log("✅ Adjust Remaining Time OK");
+			console.log("✅ Adjust Remaining Time: Timer expired after adjustment OK");
 		} else {
-			console.log("❌ Adjust Remaining Time Failed");
+			console.log("❌ Adjust Remaining Time Failed: Timer did not expire after adjustment");
 			return false;
 		}
 
