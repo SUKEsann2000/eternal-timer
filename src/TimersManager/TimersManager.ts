@@ -280,20 +280,22 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 			const timers = await this.TimersStore.loadTimers();
 
 			const index = timers.findIndex(t => t.id === id);
-			if (index === -1) {
+			if (index === -1 || timers[index] === undefined) {
 				throw new Error(`Timer with id ${id} not found`);
 			}
 
+			const old = timers[index];
+
 			const now = Date.now();
 
-			const timer = timers[index]!;
+			const timer = timers[index];
 			const remaining = Math.max(0, timer.stop - now);
 			const newRemaining = Math.max(0, remaining + delay);
 
 			timer.stop = now + newRemaining;
 			timers[index] = timer;
 			await this.TimersStore.saveTimers(timers);
-			await this.emit("updated", timer);
+			await this.emit("updated", { old, new: timer });
 			return;
 		});
 	 }
