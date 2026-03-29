@@ -47,8 +47,5 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/cjs/index.js",
-  "optionalDependencies": {
-    "@logtape/logtape": "^2.0.0"
-  }
+  "main": "./dist/cjs/index.js"
 }
