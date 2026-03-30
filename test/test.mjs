@@ -24,9 +24,9 @@ export async function module_test() {
 			finishedTimers.push(timer.id);
 		};
 		manager.on("expired", expiredListener);
-		const checkInterval = await manager.checkStart(100);
+		await manager.checkStart(100);
 		await new Promise(resolve => setTimeout(resolve, 2000));
-		clearInterval(checkInterval);
+		await manager.checkStop();
 		manager.off("expired", expiredListener);
 
 		if (finishedTimers.includes(timer1) && finishedTimers.includes(timer2) && finishedTimers.length === 2) {
@@ -79,9 +79,9 @@ export async function module_test() {
 			}
 		};
 		manager.on("expired", expiredListenerForAdjust);
-		const adjustInterval = await manager.checkStart(100);
+		await manager.checkStart(100);
 		await new Promise(resolve => setTimeout(resolve, 1000));
-		clearInterval(adjustInterval);
+		await manager.checkStop();
 		manager.off("expired", expiredListenerForAdjust);
 
 		if (adjustedTimerFinished) {
