@@ -1,6 +1,6 @@
 import { TimersManager } from "./TimersManager.js";
 import { JSONLTimersStore } from "../TimersStore/JSONLTimersStore.js";
-import { throwMessage } from "src/throwMessage.js";
+import { throwMessage } from "../throwMessage.js";
 
 /**
  * JSONLTimersManager

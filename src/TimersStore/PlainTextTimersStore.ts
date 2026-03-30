@@ -2,7 +2,7 @@ import { validate } from "uuid";
 
 import type { Timer } from "../types.js";
 import { TimersStore } from "./TimersStore.js";
-import { throwMessage } from "src/throwMessage.js";
+import { throwMessage } from "../throwMessage.js";
 
 export class PlainTextTimersStore extends TimersStore<"PlainText", object> {
 

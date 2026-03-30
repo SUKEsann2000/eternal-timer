@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 
 import type { StorageType, Timer } from "../types.js";
-import { throwMessage } from "src/throwMessage.js";
+import { throwMessage } from "../throwMessage.js";
 
 export abstract class TimersStore<T extends StorageType, Extra extends object> {
 	protected readonly timerfile: string;
