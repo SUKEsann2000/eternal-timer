@@ -307,6 +307,20 @@ await manager.adjustRemainingTime(timerId, 60000); // Add 1 minute to the timer
 await manager.adjustRemainingTime(timerId, -30000); // Subtract 30 seconds from the timer
 ```
 
+### `checkStop(): Promise<void>`
+
+Asynchronously checks for any running `checkStart` intervals and clears them if found. This effectively stops the timer monitoring process.
+
+**Returns:** A `Promise<void>` that resolves when all intervals have been cleared.
+
+**Throws:** An error if any underlying file operation fails during the process of checking and stopping.
+
+### `isBusy: boolean`
+
+A getter that returns `true` if the manager is currently monitoring for expired timers (i.e., `checkStart` has been called and `checkStop` has not yet been called), and `false` otherwise.
+
+**Returns:** `boolean` - `true` if monitoring, `false` otherwise.
+
 ## Type Definition
 
 The `StorageType` has the following structure:

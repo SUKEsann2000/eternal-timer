@@ -139,11 +139,11 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	 * checkStart
 	 * @description Starts the timer checking loop. This method should be called once after creating an instance of TimersManager to detect expired timers.
 	 * @param {number} [interval=200] Polling interval in milliseconds (default: 200ms)
-	 * @returns The interval ID which can be used to stop the loop with clearInterval
+	 * @returns Promise<void> that resolves when the loop has been started
 	 * @throws If file operation fails during checking
 	 * @example
 	 * const manager = new TimersManager();
-	 * manager.checkStart(1000); // Check for expired timers every 1 second
+	 * await manager.checkStart(1000); // Check for expired timers every 1 second
 	 */
 	public async checkStart(
 		interval: number = 200,
