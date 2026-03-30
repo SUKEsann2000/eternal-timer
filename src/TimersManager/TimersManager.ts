@@ -6,7 +6,7 @@ import searchRoot from "../searchRoot.js";
 import type { CreateTimerOptions, StorageType, Timer } from "../types.js";
 import { TimersStore } from "../TimersStore/TimersStore.js";
 import { EventEmitter } from "../EventEmitter.js";
-import { throwMessage } from "src/throwMessage.js";
+import { throwMessage } from "../throwMessage.js";
 
 /**
  * TimersManager
@@ -101,7 +101,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 			} as Timer<T, Extra>;
 
 			await this.TimersStore.appendTimer(newTimerData);
-			await this.emit("started", newTimerData);
+			await this.emit("created", newTimerData);
 			return id;
 		});
 	}
@@ -127,7 +127,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 			timers.splice(index, 1);
 			await this.TimersStore.saveTimers(timers);
-			await this.emit("stopped", timers[index]);
+			await this.emit("removed", timers[index]);
 			return;
 		});
 	}
