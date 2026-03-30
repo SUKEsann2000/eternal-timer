@@ -8,7 +8,7 @@ A simple and persistent timer library for Node.js. Timers are saved to a file an
 
 ## Features
 
-- **Monitor Timers (event-driven)**: Start monitoring expired timers and react to events like `expired`, `started`, `stopped`, and `updated` through an event system.
+- **Monitor Timers (event-driven)**: Start monitoring expired timers and react to events like `expired`, `created`, `removed`, and `updated` through an event system.
 - **Persistence**: Save timer data to a file that persists across process restarts
 - **Choice of Format**: Choose between JSON Lines for rich data or plain text for lightweight storage.
 
@@ -227,7 +227,7 @@ Removes a timer by its ID.
 
 ### `checkStart(interval?: number): Promise<NodeJS.Timeout>`
 
-Starts the timer checking loop. This method should be called once after creating an instance of a `TimersManager` to begin detecting expired timers. Events like `expired`, `errored`, `started`, `stopped`, and `updated` are emitted, which can be listened to using the `on` method.
+Starts the timer checking loop. This method should be called once after creating an instance of a `TimersManager` to begin detecting expired timers. Events like `expired`, `errored`, `created`, `removed`, and `updated` are emitted, which can be listened to using the `on` method.
 
 - **`interval`** (optional, number): Polling interval in milliseconds (default: 200ms)
 
@@ -239,7 +239,7 @@ Starts the timer checking loop. This method should be called once after creating
 
 Registers an event listener for a specific timer event.
 
-- **`event`**: The name of the event to listen for (e.g., `'expired'`, `'started'`, `'stopped'`, `'updated'`, `'errored'`).
+- **`event`**: The name of the event to listen for (e.g., `'expired'`, `'created'`, `'removed'`, `'updated'`, `'errored'`).
 - **`listener`**: The callback function to execute when the event is emitted. It receives the event payload as an argument.
 
 **Returns:** `void`
@@ -351,8 +351,8 @@ type TimerEvents<T extends StorageType, Extra extends object> = {
   expired: Timer<T, Extra>
   errored: Error
   interval: void
-  started: Timer<T, Extra>
-  stopped: Timer<T, Extra>
+  created: Timer<T, Extra>
+  removed: Timer<T, Extra>
   updated: { old: Timer<T, Extra>, new: Timer<T, Extra> }
 }
 ```
