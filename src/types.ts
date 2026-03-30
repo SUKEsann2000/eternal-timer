@@ -27,8 +27,8 @@ export type TimerEvents<T extends StorageType, Extra extends object> = {
   expired: Timer<T, Extra>
   errored: Error
   interval: void
-  started: Timer<T, Extra>
-  stopped: Timer<T, Extra>
+  created: Timer<T, Extra>
+  removed: Timer<T, Extra>
   updated: { old: Timer<T, Extra>, new: Timer<T, Extra> }
 }
 
