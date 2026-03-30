@@ -21,6 +21,9 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	protected readonly timerfiledir: string;
 	protected checkLock: boolean = false;
 
+	protected interval: NodeJS.Timeout | undefined;
+	protected running: boolean = false;
+
 	protected TimersStore: TimersStore<T, Extra> | null = null;
 
 	private queue: Promise<void> = Promise.resolve();
@@ -144,18 +147,21 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	 */
 	public async checkStart(
 		interval: number = 200,
-	): Promise<NodeJS.Timeout> {
+	): Promise<void> {
+
+		if (this.running) return;
+		this.running = true;
 
 		this.TimersStore ??= await this.createTimersStore();
 
 		const loop = async () => {
+			if (!this.running) return;
 			if (this.checkLock) return;
+
 			this.checkLock = true;
 
-			let expiredTimers: Timer<T, Extra>[] = [];
-
 			try {
-				expiredTimers = await this.runExclusive(async () => {
+				const expiredTimers = await this.runExclusive(async () => {
 					await this.emit("interval", void 0);
 					const allTimers = await this.TimersStore!.loadTimers();
 					const now = Date.now();
@@ -164,11 +170,8 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 					const active: Timer<T, Extra>[] = [];
 
 					for (const timer of allTimers) {
-						if (timer.stop <= now) {
-							expired.push(timer);
-						} else {
-							active.push(timer);
-						}
+						if (timer.stop <= now) expired.push(timer);
+						else active.push(timer);
 					}
 
 					if (expired.length > 0) {
@@ -178,23 +181,50 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 					return expired;
 				});
 
-			} catch (e) {
-				this.emit("errored", e instanceof Error ? e : new Error(String(e))).catch(() => {});
-				this.checkLock = false;
-				return;
-			}
-			for (const timer of expiredTimers) {
-				try {
+				for (const timer of expiredTimers) {
 					await this.emit("expired", timer);
-				} catch (e) {
-					await this.emit("errored", e instanceof Error ? e : new Error(String(e)));
 				}
-			}
 
-			this.checkLock = false;
+			} catch (e) {
+				await this.emit("errored", e instanceof Error ? e : new Error(String(e)));
+				this.running = false;
+			} finally {
+				this.checkLock = false;
+			}
 		};
 
-		return setInterval(loop, interval);
+		this.interval = setInterval(loop, interval);
+	}
+
+	/**
+	 * checkStop
+	 * @description Stops the timer checking loop.
+	 * @returns Promise resolving when the loop has been stopped
+	 * @example
+	 * const manager = new TimersManager();
+	 * await manager.checkStart(1000);
+	 * // ... later, to stop checking:
+	 * await manager.checkStop();
+	 */
+	public async checkStop(): Promise<void> {
+		this.running = false;
+		if (this.interval) {
+			clearInterval(this.interval);
+			this.interval = undefined;
+		}
+	}
+
+	/**
+	 * isBusy
+	 * @description Indicates whether the TimersManager is currently performing a file operation (e.g. loading or saving timers). This can be used to avoid starting multiple operations simultaneously.
+	 * @returns `true` if a file operation is in progress, otherwise `false`
+	 * @example
+	 * if (!manager.isBusy) {
+	 *   await manager.createTimer(5000);
+	 * }
+	 */
+	public get isBusy(): boolean {
+		return this.checkLock;
 	}
 
 	/**
