@@ -24,6 +24,8 @@ export type CreateTimerOptions<T extends StorageType, Extra extends object> = T 
       : never;
 
 export type TimerEvents<T extends StorageType, Extra extends object> = {
+  started: void,
+  stopped: void,
   expired: Timer<T, Extra>
   errored: Error
   interval: void

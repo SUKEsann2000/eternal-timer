@@ -193,6 +193,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 			}
 		};
 
+		this.emit("started", void 0);
 		this.interval = setInterval(loop, interval);
 	}
 
@@ -212,6 +213,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 			clearInterval(this.interval);
 			this.interval = undefined;
 		}
+		this.emit("stopped", void 0);
 	}
 
 	/**
