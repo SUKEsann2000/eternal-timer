@@ -18,6 +18,8 @@ This document defines the rules and template for writing release notes for this 
 - Group changes by type
 - Avoid implementation details unless necessary
 - If there are no changes in a section, omit the section
+- Use git command and check what changed
+- If you have some questions, ask user
 
 ## Version Comparison Rule
 
