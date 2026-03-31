@@ -1,59 +1,56 @@
-# npm Package Release Notes Rules
+You are generating release notes for an npm package.
 
-This document defines the rules and template for writing release notes for this npm package.
+You have access to the following capabilities:
+- Run shell commands
+- Read files
 
-## General Rules
+Your task:
 
-- Release notes are **user-facing**
+1. Identify the latest release tag (e.g. vX.Y.Z)
+2. Compare it with the current HEAD
+3. Use git commands to inspect changes:
+   - git tag
+   - git log <prev_tag>..HEAD
+   - git diff <prev_tag>..HEAD
+   - git diff --stat <prev_tag>..HEAD
+
+Rules:
+- Release notes are user-facing
 - Do NOT list raw commit messages
-- Do NOT speculate or infer behavior
-- Only describe changes that can be confirmed from the diff
+- Do NOT speculate or infer behavior beyond what can be confirmed
+- Only describe changes visible from git diff/log
 - Prefer clarity over completeness
-- Internal refactors should be mentioned **only if they affect users**
+- Ignore internal refactors unless they affect users
 
-## Writing Guidelines
+Instructions:
+- Identify user-visible changes from the diff
+- Summarize what changed and why it matters
+- Group into sections:
+  - Added
+  - Changed
+  - Fixed
+  - Removed
+  - Breaking Changes (only if clearly present)
+- If something is unclear, omit it
 
-- Use clear and concise English
-- Each bullet should describe **what changed** and **why it matters**
-- Group changes by type
-- Avoid implementation details unless necessary
-- If there are no changes in a section, omit the section
-- Use git command and check what changed
-- If you have some questions, ask user
+Output format:
 
-## Version Comparison Rule
-
-- Always compare against the previous release tag  
-  (e.g. `v2.0.3` → current version)
-
----
-
-# Release Notes Template
-
-```md
-# vX.Y.Z Release Notes
+# vNEXT Release Notes
 
 ## Summary
-Briefly describe the purpose of this release and its overall impact.
+(1–2 sentences summarizing the release)
 
 ## Added
-- New features or capabilities introduced in this release.
+- ...
 
 ## Changed
-- Modifications to existing behavior that are not bug fixes.
+- ...
 
 ## Fixed
-- Bug fixes and corrections.
+- ...
 
 ## Removed
-- Deprecated or removed features or behaviors.
+- ...
 
 ## Breaking Changes
-- Clearly describe any breaking changes.
-- If none, this section should be omitted.
-
-## Migration Notes (if applicable)
-- Steps users need to take to adapt to breaking changes.
-
-## Notes
-- Any additional information relevant to users.
+- ...
