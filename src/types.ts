@@ -28,10 +28,6 @@ export type TimerEvents<T extends StorageType, Extra extends object> = {
   stopped: void,
   expired: Timer<T, Extra>
   errored: Error
-  interval: void
-  created: Timer<T, Extra>
-  removed: Timer<T, Extra>
-  updated: { old: Timer<T, Extra>, new: Timer<T, Extra> }
 }
 
 export type ListenerMap<T extends StorageType, Extra extends object> = {

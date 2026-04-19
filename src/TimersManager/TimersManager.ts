@@ -104,7 +104,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 			} as Timer<T, Extra>;
 
 			await this.TimersStore.appendTimer(newTimerData);
-			await this.emit("created", newTimerData);
 			return id;
 		});
 	}
@@ -130,7 +129,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 			timers.splice(index, 1);
 			await this.TimersStore.saveTimers(timers);
-			await this.emit("removed", timers[index]);
 			return;
 		});
 	}
@@ -162,7 +160,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 			try {
 				const expiredTimers = await this.runExclusive(async () => {
-					await this.emit("interval", void 0);
 					const allTimers = await this.TimersStore!.loadTimers();
 					const now = Date.now();
 
@@ -264,8 +261,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 				throw new Error(throwMessage.NotFound(id));
 			}
 
-			const old = { ...timers[index] };
-
 			const now = Date.now();
 
 			const timer = timers[index];
@@ -274,7 +269,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 			timer.stop = now + newRemaining;
 			await this.TimersStore.saveTimers(timers);
-			await this.emit("updated", { old, new: timer });
 			return;
 		});
 	 }
