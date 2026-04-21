@@ -8,7 +8,7 @@ A simple and persistent timer library for Node.js. Timers are saved to a file an
 
 ## Features
 
-- **Monitor Timers (event-driven)**: Start monitoring expired timers and react to events like `expired`, `created`, `removed`, and `updated` through an event system.
+- **Monitor Timers (event-driven)**: Start monitoring expired timers and react to events like `expired`, `errored`, `started`, and `stopped` through an event system.
 - **Persistence**: Save timer data to a file that persists across process restarts
 - **Choice of Format**: Choose between JSON Lines for rich data or plain text for lightweight storage.
 
@@ -239,7 +239,7 @@ Starts the timer checking loop. This method should be called once after creating
 
 Registers an event listener for a specific timer event.
 
-- **`event`**: The name of the event to listen for (e.g., `'expired'`, `'created'`, `'removed'`, `'updated'`, `'errored'`).
+- **`event`**: The name of the event to listen for (e.g., `'expired'`, `'errored'`, `'started'`, `'stopped'`).
 - **`listener`**: The callback function to execute when the event is emitted. It receives the event payload as an argument.
 
 **Returns:** `void`
@@ -362,12 +362,10 @@ type CreateTimerOptions<T extends StorageType, Extra extends object> = T extends
 The `TimerEvents` type defines the events emitted by `TimersManager`:
 ```typescript
 type TimerEvents<T extends StorageType, Extra extends object> = {
-  expired: Timer<T, Extra>
-  errored: Error
-  interval: void
-  created: Timer<T, Extra>
-  removed: Timer<T, Extra>
-  updated: { old: Timer<T, Extra>, new: Timer<T, Extra> }
+  expired: Timer<T, Extra>,
+  errored: Error,
+  started: void,
+  stopped: void
 }
 ```
 ## Scripts
