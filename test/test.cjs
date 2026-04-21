@@ -50,26 +50,18 @@ async function cjs_test() {
 
 		const timer4 = isJSONL ? await manager.createTimer({ length: 10000, extra: { title: "TestTimer4" } }) : await manager.createTimer(10000);
 		
-		let updatedEventTriggered = false;
-		let resolveUpdatedPromise;
-		const updatedPromise = new Promise(resolve => { resolveUpdatedPromise = resolve; });
-
-		const updatedListener = ({ old, new: updatedTimer }) => {
-			if (updatedTimer.id === timer4) {
-				updatedEventTriggered = true;
-				resolveUpdatedPromise();
-			}
-		};
-		manager.on("updated", updatedListener);
-
 		await manager.adjustRemainingTime(timer4, -9500);
-		await updatedPromise;
-		manager.off("updated", updatedListener);
-		if (!updatedEventTriggered) {
-			console.log("❌ Adjust Remaining Time Failed: Updated event not triggered");
-			return false;
+		
+		const timersAfterAdjustment = await manager.showTimers();
+		const adjustedTimer = timersAfterAdjustment.find(t => t.id === timer4);
+		const now = Date.now();
+		const calculatedRemaining = adjustedTimer ? adjustedTimer.stop - now : -1;
+
+		if (adjustedTimer && calculatedRemaining >= -100 && calculatedRemaining <= 500) {
+			console.log("✅ Adjust Remaining Time OK");
 		} else {
-			console.log("✅ Adjust Remaining Time: Updated event triggered OK");
+			console.log("❌ Adjust Remaining Time Failed: Timer not adjusted correctly. Remaining: " + calculatedRemaining);
+			return false;
 		}
 
 		let adjustedTimerFinished = false;
