@@ -4,6 +4,7 @@ export const throwMessage = {
 	FilePathinvalid: "Timer file path must be within the project directory",
 	NoExtra: "Cannot create timer without extra fields in JSONL",
 	InvalidLength: (length: number) => `Invalid length: ${length}`,
+	InvalidAdjustment: (delay: number) => `Invalid adjustment: ${delay}`,
 	InvalidSyntax: "Timer file's syntax is wrong",
 	LoadTimerData: "Error when loading timer data",
 	SaveTimerData: "Error when saving timer data",

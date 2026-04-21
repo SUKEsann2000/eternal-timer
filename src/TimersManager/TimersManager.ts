@@ -86,7 +86,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 			}
 
 			let length: number = typeof options === "object" ? options.length : options;
-			if (length < 0) throw new Error(throwMessage.InvalidLength(length));
+			if (length < 0 || !Number.isFinite(length)) throw new Error(throwMessage.InvalidLength(length));
 
 			length = Math.trunc(length);
 
@@ -253,6 +253,10 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
       */
 	public async adjustRemainingTime(id: string, delay: number): Promise<void> {
 		return this.runExclusive(async () => {
+			if (typeof delay !== "number" || !Number.isFinite(delay)) {
+				throw new Error(throwMessage.InvalidAdjustment(delay));
+			}
+
 			this.TimersStore ??= await this.createTimersStore();
 			const timers = await this.TimersStore.loadTimers();
 
