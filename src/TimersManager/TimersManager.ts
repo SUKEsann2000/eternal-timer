@@ -179,7 +179,11 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 				});
 
 				for (const timer of expiredTimers) {
-					await this.emit("expired", timer);
+					try {
+						await this.emit("expired", timer);
+					} catch (e) {
+						await this.emit("errored", e instanceof Error ? e : new Error(String(e)));
+					}
 				}
 
 			} catch (e) {
@@ -187,11 +191,14 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 				this.running = false;
 			} finally {
 				this.checkLock = false;
+				if (this.running) {
+					this.interval = setTimeout(loop, interval);
+				}
 			}
 		};
 
 		this.emit("started", void 0);
-		this.interval = setInterval(loop, interval);
+		this.interval = setTimeout(loop, interval);
 	}
 
 	/**
@@ -207,7 +214,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	public async checkStop(): Promise<void> {
 		this.running = false;
 		if (this.interval) {
-			clearInterval(this.interval);
+			clearTimeout(this.interval);
 			this.interval = undefined;
 		}
 		this.emit("stopped", void 0);
