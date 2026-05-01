@@ -1,8 +1,5 @@
-import path from "path";
-import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 
-import searchRoot from "../searchRoot.js";
 import type { CreateTimerOptions, StorageType, Timer } from "../types.js";
 import { TimersStore } from "../TimersStore/TimersStore.js";
 import { EventEmitter } from "../EventEmitter.js";
@@ -45,7 +42,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
       * @example
       * const manager = new TimersManager(); // Uses default timer file path
       * const manager = new TimersManager("/path/to/timers.txt"); // Uses specified timer file path
-      */
 	constructor(
 		timerfile?: string,
 	) {
@@ -60,6 +56,12 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 		} catch {
 			fs.writeFileSync(this.timerfiledir, "");
 		}
+	}
+	*/
+
+	protected constructor(timerfile?: string) {
+		super();
+		this.timerfiledir = timerfile ?? this.getDefaultFilename();
 	}
 
 	/**
