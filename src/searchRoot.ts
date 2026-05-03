@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "fs/promises";
 import path from "path";
 
 /**
@@ -6,9 +6,9 @@ import path from "path";
  * @description searching root directly of the project
  * @returns directly of the project(string)
  */
-export default function searchRoot() {
+export default async function searchRoot() {
 	let dir = process.cwd();
-	while (!fs.existsSync(path.join(dir, "package.json"))) {
+	while (!(await fs.access(path.join(dir, "package.json")).catch(() => false))) {
 		const parent = path.dirname(dir);
 		if (parent === dir) break;
 		dir = parent;
