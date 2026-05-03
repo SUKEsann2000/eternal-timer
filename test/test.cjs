@@ -2,7 +2,7 @@ const { JSONLTimersManager, PlainTextTimersManager } = require("eternal-timer");
 
 async function cjs_test() {
 	const runTest = async(isJSONL) => {
-		const manager = isJSONL ? new JSONLTimersManager("test/.timers.jsonl") : new PlainTextTimersManager("test/.timers");
+		const manager = isJSONL ? await JSONLTimersManager.create("test/.timers.jsonl") : await PlainTextTimersManager.create("test/.timers");
 
 		const timer1 = isJSONL ? await manager.createTimer({ length: 1000, extra: { title: "TestTimer1" , description: "This is test1" } }) : await manager.createTimer(1000);
 		const timer2 = isJSONL ? await manager.createTimer({ length: 1500, extra: { title: "TestTimer2", description: "This is test2" } }) : await manager.createTimer(1500);
