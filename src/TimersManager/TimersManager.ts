@@ -16,7 +16,7 @@ import { throwMessage } from "../throwMessage.js";
  */
 export abstract class TimersManager<T extends StorageType, Extra extends object> extends EventEmitter<T, Extra> {
 	protected readonly timerfiledir: string;
-	
+
 	// lock if the check loop is running, or not. This is used to prevent multiple check loops from running simultaneously and to indicate whether a file operation is in progress (e.g. loading or saving timers).
 	protected checkLock: boolean = false;
 
@@ -43,7 +43,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	 * @description Initializes the TimersManager instance.
 	 * @deprecated This constructor is deprecated. Please use the static `create` method instead, which performs necessary asynchronous initialization. The constructor will be made private in a future release.
 	 * @example
-	 * const manager = new TimersManager("/path/to/timers"); // Uses specified timer file path  
+	 * const manager = new TimersManager("/path/to/timers"); // Uses specified timer file path
 	 */
 	protected constructor(timerfile: string) {
 		super();
