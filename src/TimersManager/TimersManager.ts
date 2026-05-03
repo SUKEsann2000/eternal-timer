@@ -21,7 +21,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	protected interval: NodeJS.Timeout | undefined;
 	protected running: boolean = false;
 
-	protected TimersStore: TimersStore<T, Extra> | null = null;
+	protected abstract TimersStore: TimersStore<T, Extra>;
 
 	private queue: Promise<void> = Promise.resolve();
 	protected runExclusive<T>(fn: () => Promise<T>) {
@@ -31,7 +31,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	}
 
 	protected abstract getDefaultFilename(): string;
-	protected abstract createTimersStore(): Promise<TimersStore<T, Extra>>;
 	protected abstract type: T;
 
 	/**
@@ -65,8 +64,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
      */
 	public async createTimer(options: CreateTimerOptions<T, Extra>): Promise<string> {
 		return this.runExclusive(async () => {
-			this.TimersStore ??= await this.createTimersStore();
-
 			if (this.type === "JSONL" && typeof options === "number") {
 				throw new Error(throwMessage.NoExtra);
 			}
@@ -105,7 +102,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
      */
 	public async removeTimer(id: string): Promise<void> {
 		return this.runExclusive(async () => {
-			this.TimersStore ??= await this.createTimersStore();
 			const timers = await this.TimersStore.loadTimers();
 
 			const index = timers.findIndex(t => t.id === id);
@@ -135,8 +131,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 		if (this.running) return;
 		this.running = true;
-
-		this.TimersStore ??= await this.createTimersStore();
 
 		const loop = async () => {
 			if (!this.running) return;
@@ -230,7 +224,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 		*/
 	public async showTimers(): Promise<Timer<T, Extra>[]> {
 		return this.runExclusive(async () => {
-			this.TimersStore ??= await this.createTimersStore();
 			const timersData = await this.TimersStore.loadTimers();
 			return timersData;
 		});
@@ -250,7 +243,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 				throw new Error(throwMessage.InvalidAdjustment(delay));
 			}
 
-			this.TimersStore ??= await this.createTimersStore();
 			const timers = await this.TimersStore.loadTimers();
 
 			const index = timers.findIndex(t => t.id === id);

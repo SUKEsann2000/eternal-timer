@@ -52,20 +52,13 @@ export class JSONLTimersManager<Extra extends object> extends TimersManager<"JSO
 	 */
 	protected constructor(timerfile?: string) {
 		super(timerfile);
-		this.createTimersStore().then(store => {
-			this.TimersStore = store;
-			return store;
-		});
+		this.TimersStore = new JSONLTimersStore(this.timerfiledir);
 	}
 
-	protected override TimersStore: JSONLTimersStore<Extra> | null = null;
+	protected override TimersStore: JSONLTimersStore<Extra>;
 
 	protected override getDefaultFilename(): string {
 		return ".timers.jsonl";
-	}
-
-	protected override async createTimersStore(): Promise<JSONLTimersStore<Extra>> {
-		return new JSONLTimersStore(this.timerfiledir);
 	}
 
 	protected override type: "JSONL" = "JSONL" as const;
@@ -87,7 +80,6 @@ export class JSONLTimersManager<Extra extends object> extends TimersManager<"JSO
 		newExtra: Extra,
 	): Promise<void> {
 		return this.runExclusive(async () => {
-			this.TimersStore ??= await this.createTimersStore();
 			try {
 				const timers = await this.TimersStore.loadTimers();
 

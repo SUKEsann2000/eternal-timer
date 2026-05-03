@@ -52,13 +52,10 @@ export class PlainTextTimersManager extends TimersManager<"PlainText", object> {
 	 */
 	protected constructor(timerfile?: string) {
 		super(timerfile);
-		this.createTimersStore().then(store => {
-			this.TimersStore = store;
-			return store;
-		});
+		this.TimersStore = new PlainTextTimersStore(this.timerfiledir);
 	}
 
-	protected override TimersStore: PlainTextTimersStore | null = null;
+	protected override TimersStore: PlainTextTimersStore;
 
 	protected override getDefaultFilename(): string {
 		return ".timers";
