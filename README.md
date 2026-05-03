@@ -31,14 +31,14 @@ import { JSONLTimersManager } from 'eternal-timer';
 
 async function main() {
     // By default, timers are stored in '.timers.jsonl' in the project root.
-    const manager = new JSONLTimersManager();
+    const manager = await JSONLTimersManager.create();
 
     // Create a timer (5 seconds) with a title and description
     const timerId = await manager.createTimer({length: 5000, extra: { title: 'My Timer', description: 'This is a test timer.' }});
     console.log('Timer created:', timerId);
 
     // Start monitoring for expired timers
-    const interval = await manager.checkStart();
+   await manager.checkStart();
 
     // Listen for 'expired' events
     manager.on('expired', (timer) => {
@@ -50,8 +50,8 @@ async function main() {
     console.log('Active timers:', timers);
 
     // To stop monitoring, for example after 10 seconds
-    setTimeout(() => {
-        clearInterval(interval);
+    setTimeout(async () => {
+        await manager.checkStop();
         console.log('Stopped monitoring timers.');
     }, 10000);
 }
@@ -68,14 +68,14 @@ import { PlainTextTimersManager } from 'eternal-timer';
 
 async function main() {
     // By default, timers are stored in '.timers' in the project root.
-    const manager = new PlainTextTimersManager();
+    const manager = await PlainTextTimersManager.create();
 
     // Create a timer (5 seconds)
     const timerId = await manager.createTimer(5000);
     console.log('Timer created:', timerId);
 
     // Start monitoring for expired timers
-    const interval = await manager.checkStart();
+    await manager.checkStart();
 
     // Listen for 'expired' events
     manager.on('expired', (timer) => {
@@ -87,8 +87,8 @@ async function main() {
     console.log('Active timers:', timers);
     
     // Stop monitoring after a while
-    setTimeout(() => {
-        clearInterval(interval);
+    setTimeout(async () => {
+        await manager.checkStop();
         console.log('Stopped monitoring for timers.');
     }, 10000);
 }
@@ -100,10 +100,13 @@ main();
 
 ### `JSONLTimersManager`
 
-#### `constructor(timerfiledir?: string)`
-Creates a manager for timers stored in **JSON Lines** format.
+#### `static create<Extra extends object = object>(timerfile?: string): Promise<JSONLTimersManager<Extra>>`
+Creates an instance of `JSONLTimersManager`.
 
-- **`timerfiledir`** (optional, string): Path to the timer file. Defaults to `.timers.jsonl` in the project root.
+- **`timerfile`** (optional, string): Path to the timer file. Defaults to `.timers.jsonl` in the project root.
+
+> [!NOTE]
+> The constructor is `protected`. Please use this `create` method to instantiate the manager.
 
 #### `changeExtra(id: string, newExtra: Extra): Promise<void>`
 Changes the `extra` data of an existing timer.
@@ -131,8 +134,8 @@ interface MyTimerExtra {
 }
 
 async function main() {
-    // Specify MyTimerExtra as the type argument for JSONLTimersManager
-    const manager = new JSONLTimersManager<MyTimerExtra>();
+    // Specify MyTimerExtra as the type argument for JSONLTimersManager.create
+    const manager = await JSONLTimersManager.create<MyTimerExtra>();
 
     // Create a timer with custom extra data
     const timerId = await manager.createTimer({
@@ -159,10 +162,13 @@ main();
 
 ### `PlainTextTimersManager`
 
-#### `constructor(timerfiledir?: string)`
-Creates a manager for timers stored in **plain-text** format.
+#### `static create(timerfile?: string): Promise<PlainTextTimersManager>`
+Creates an instance of `PlainTextTimersManager`.
 
-- **`timerfiledir`** (optional, string): Path to the timer file. Defaults to `.timers` in the project root.
+- **`timerfile`** (optional, string): Path to the timer file. Defaults to `.timers` in the project root.
+
+> [!NOTE]
+> The constructor is `protected`. Please use this `create` method to instantiate the manager.
 
 ---
 
@@ -187,17 +193,15 @@ Creates a new timer and saves it to the file.
 **Examples:**
 
 ```javascript
-// For PlainTextTimersManager with a custom Extra type
 import { PlainTextTimersManager } from 'eternal-timer';
 
 // For PlainTextTimersManager
-const manager = new PlainTextTimersManager();
+const manager = await PlainTextTimersManager.create();
 const newTimerId = await manager.createTimer(5000); // Create a 5-second timer
 console.log('Created PlainText timer with ID:', newTimerId);
 ```
 
 ```typescript
-// For JSONLTimersManager with a custom Extra type
 import { JSONLTimersManager } from 'eternal-timer';
 
 interface MyCustomExtra {
@@ -205,7 +209,7 @@ interface MyCustomExtra {
   userId: string;
 }
 
-const jsonlManager = new JSONLTimersManager<MyCustomExtra>();
+const jsonlManager = await JSONLTimersManager.create<MyCustomExtra>();
 const jsonlTimerId = await jsonlManager.createTimer({
   length: 10000, // 10 seconds
   extra: {
@@ -382,12 +386,12 @@ You can choose between two storage formats by selecting the appropriate manager 
 ### 1. JSON Lines (via `JSONLTimersManager`)
 This is the recommended format for storing rich metadata.
 
-- **Pros**: Allows for storing `title` and `description`. Improved memory efficiency due to line-by-line file reading.
+- **Pros**: Allows for storing extra properties(e.g. title and description). Improved memory efficiency due to line-by-line file reading.
 - **Cons**: Involves JSON parsing, which may have a minor performance overhead.
 - **Default File**: `.timers.jsonl`
 - **Format**:
   ```json
-  {"id":"...","start":1678886400000,"stop":1678886405000,"title":"My Timer","description":"..."}
+  {"id":"...","start":1678886400000,"stop":1678886405000,{"extra": { "title":"My Timer","description":"..." } }}
   ```
 
 ### 2. Plain Text (via `PlainTextTimersManager`)

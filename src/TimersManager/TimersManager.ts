@@ -16,13 +16,18 @@ import { throwMessage } from "../throwMessage.js";
  */
 export abstract class TimersManager<T extends StorageType, Extra extends object> extends EventEmitter<T, Extra> {
 	protected readonly timerfiledir: string;
+	
+	// lock if the check loop is running, or not. This is used to prevent multiple check loops from running simultaneously and to indicate whether a file operation is in progress (e.g. loading or saving timers).
 	protected checkLock: boolean = false;
 
+	// Interval id of the check loop. If the loop is not running, this is undefined.
 	protected interval: NodeJS.Timeout | undefined;
+	// Indicates whether the check loop is running. This is used to control the loop and to prevent starting multiple loops simultaneously.
 	protected running: boolean = false;
 
 	protected abstract TimersStore: TimersStore<T, Extra>;
 
+	// A simple promise queue to ensure that file operations are performed sequentially, preventing race conditions
 	private queue: Promise<void> = Promise.resolve();
 	protected runExclusive<T>(fn: () => Promise<T>) {
 		const p = this.queue.then(fn);
@@ -38,6 +43,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	 * @param {string | undefined} timerfile optional timer file path. If not provided, the default path will be used.
 	 * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created.
 	 * @throws If file access or creation fails
+	 * @deprecated This constructor is deprecated. Please use the static `create` method instead, which performs necessary asynchronous initialization. The constructor will be made private in a future release.
 	 * @example
 	 * const manager = new TimersManager(); // Uses default timer file path
 	 * const manager = new TimersManager("/path/to/timers"); // Uses specified timer file path  
@@ -55,11 +61,11 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
      * @throws If length is invalid (e.g. length < 0) or file operation fails
      * @example
      * // For PlainTextTimersManager
-     * const manager = new PlainTextTimersManager();
+     * const manager = await PlainTextTimersManager.create();
      * const newTimerId = await manager.createTimer(5000); // Create a 5-second timer
      *
      * // For JSONLTimersManager
-     * const jsonlManager = new JSONLTimersManager<{ title: string }>();
+     * const jsonlManager = await JSONLTimersManager.create<{ title: string }>();
      * const jsonlTimerId = await jsonlManager.createTimer({ length: 10000, extra: { title: "My JSONL Timer" } }); // Create a 10-second timer with extra data
      */
 	public async createTimer(options: CreateTimerOptions<T, Extra>): Promise<string> {
@@ -122,7 +128,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	 * @returns Promise<void> that resolves when the loop has been started
 	 * @throws If file operation fails during checking
 	 * @example
-	 * const manager = new TimersManager();
 	 * await manager.checkStart(1000); // Check for expired timers every 1 second
 	 */
 	public async checkStart(
@@ -186,7 +191,6 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	 * @description Stops the timer checking loop.
 	 * @returns Promise resolving when the loop has been stopped
 	 * @example
-	 * const manager = new TimersManager();
 	 * await manager.checkStart(1000);
 	 * // ... later, to stop checking:
 	 * await manager.checkStop();
@@ -236,6 +240,10 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
       * @param {number} delay Delay in milliseconds to add/subtract from the remaining time
       * @returns Promise resolving when the operation is complete
       * @throws If file operation fails
+	  * @example
+	  * const timer = await manager.createTimer(10000); // Create a 10-second timer
+	  * await manager.adjustRemainingTime(timer, -2000); // Subtract 2 seconds from the remaining time (now 8 seconds left)
+	  * await manager.adjustRemainingTime(timer, 3000); // Add 3 seconds to the remaining time (now 11 seconds left)
       */
 	public async adjustRemainingTime(id: string, delay: number): Promise<void> {
 		return this.runExclusive(async () => {

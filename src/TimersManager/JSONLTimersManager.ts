@@ -46,6 +46,7 @@ export class JSONLTimersManager<Extra extends object> extends TimersManager<"JSO
 	 * @param {string | undefined} timerfile optional timer file path. If not provided, the default path will be used.
 	 * @description Initializes the JSONLTimersManager instance. If the timer file does not exist, an empty file is created.
 	 * @throws If file access or creation fails
+	 * @deprecated This constructor is deprecated. Please use the static `create` method instead, which performs necessary asynchronous initialization. The constructor will be made private in a future release.
 	 * @example
 	 * const manager = new JSONLTimersManager(); // Uses default timer file path
 	 * const manager = new JSONLTimersManager("/path/to/timers.jsonl"); // Uses specified timer file path 
