@@ -214,14 +214,14 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	}
 
 	/**
-		* showTimers
-		* @description Retrieves all active timers.
-		* @returns Array of `Timer` objects
-		* @throws If file operation fails
-		* @example
-		* const timers = await manager.showTimers();
-		* console.log(JSON.stringify(timers))
-		*/
+	 * showTimers
+	 * @description Retrieves all active timers.
+	 * @returns Array of `Timer` objects
+	 * @throws If file operation fails
+	 * @example
+	 * const timers = await manager.showTimers();
+	 * console.log(JSON.stringify(timers));
+	 */
 	public async showTimers(): Promise<Timer<T, Extra>[]> {
 		return this.runExclusive(async () => {
 			const timersData = await this.TimersStore.loadTimers();
@@ -230,7 +230,7 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	}
 
 	/**
-      * adjustRemainingTime
+     * adjustRemainingTime
       * @description Adjusts the remaining time of a timer.
       * @param {string} id ID of the timer to modify
       * @param {number} delay Delay in milliseconds to add/subtract from the remaining time
