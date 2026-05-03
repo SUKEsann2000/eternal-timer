@@ -1,8 +1,5 @@
-import path from "path";
-import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 
-import searchRoot from "../searchRoot.js";
 import type { CreateTimerOptions, StorageType, Timer } from "../types.js";
 import { TimersStore } from "../TimersStore/TimersStore.js";
 import { EventEmitter } from "../EventEmitter.js";
@@ -38,28 +35,17 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	protected abstract type: T;
 
 	/**
-      * constructor
-      * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created.
-      * @param {string} [timerfile] (string, optional) Configuration timer file path and it is treated as the timer file path.
-      * @throws If file access or creation fails
-      * @example
-      * const manager = new TimersManager(); // Uses default timer file path
-      * const manager = new TimersManager("/path/to/timers.txt"); // Uses specified timer file path
-      */
-	constructor(
-		timerfile?: string,
-	) {
+	 * constructor
+	 * @param {string | undefined} timerfile optional timer file path. If not provided, the default path will be used.
+	 * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created.
+	 * @throws If file access or creation fails
+	 * @example
+	 * const manager = new TimersManager(); // Uses default timer file path
+	 * const manager = new TimersManager("/path/to/timers"); // Uses specified timer file path  
+	 */
+	protected constructor(timerfile?: string) {
 		super();
-		const rootDir = searchRoot();
-		this.timerfiledir = path.resolve(rootDir, timerfile ?? this.getDefaultFilename());
-		if (!this.timerfiledir.startsWith(rootDir)) {
-			throw new Error(throwMessage.FilePathinvalid);
-		}
-		try {
-			fs.accessSync(this.timerfiledir);
-		} catch {
-			fs.writeFileSync(this.timerfiledir, "");
-		}
+		this.timerfiledir = timerfile ?? this.getDefaultFilename();
 	}
 
 	/**
