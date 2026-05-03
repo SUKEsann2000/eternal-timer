@@ -8,10 +8,15 @@ import path from "path";
  */
 export default async function searchRoot() {
 	let dir = process.cwd();
-	while (!(await fs.access(path.join(dir, "package.json")).catch(() => false))) {
-		const parent = path.dirname(dir);
-		if (parent === dir) break;
-		dir = parent;
+	while (true) {
+		try {
+			await fs.access(path.join(dir, "package.json"));
+			return dir;
+		} catch {
+			const parent = path.dirname(dir);
+			if (parent === dir) break;
+			dir = parent;
+		}
 	}
 	return dir;
 }

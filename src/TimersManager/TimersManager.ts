@@ -35,22 +35,19 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 		return p;
 	}
 
-	protected abstract getDefaultFilename(): string;
 	protected abstract type: T;
 
 	/**
 	 * constructor
-	 * @param {string | undefined} timerfile optional timer file path. If not provided, the default path will be used.
-	 * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created.
-	 * @throws If file access or creation fails
+	 * @param {string} timerfile timer file path.
+	 * @description Initializes the TimersManager instance.
 	 * @deprecated This constructor is deprecated. Please use the static `create` method instead, which performs necessary asynchronous initialization. The constructor will be made private in a future release.
 	 * @example
-	 * const manager = new TimersManager(); // Uses default timer file path
 	 * const manager = new TimersManager("/path/to/timers"); // Uses specified timer file path  
 	 */
-	protected constructor(timerfile?: string) {
+	protected constructor(timerfile: string) {
 		super();
-		this.timerfiledir = timerfile ?? this.getDefaultFilename();
+		this.timerfiledir = timerfile;
 	}
 
 	/**

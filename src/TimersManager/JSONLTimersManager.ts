@@ -9,13 +9,14 @@ import { throwMessage } from "../throwMessage.js";
 /**
  * JSONLTimersManager
  * @description
- * Manages timers stored in a  JSONL file.
- * (This is a abstract class)
+ * Manages timers stored in a JSONL file.
  *
  * - Timers are persisted in a file
  * - Expired timers are detected by polling
  */
 export class JSONLTimersManager<Extra extends object> extends TimersManager<"JSONL", Extra> {
+	public static readonly defaultFilename = ".timers.jsonl";
+
 	/**
 	 * create
 	 * @param {string | undefined} timerfile optional timer file path. If not provided, the default path will be used.
@@ -28,8 +29,11 @@ export class JSONLTimersManager<Extra extends object> extends TimersManager<"JSO
 	 */
 	public static async create<Extra extends object = object>(timerfile?: string): Promise<JSONLTimersManager<Extra>> {
 		const rootDir = await searchRoot();
-		const manager = new this<Extra>(timerfile);
-		const timerfiledir = path.resolve(rootDir, manager.timerfiledir);
+		const filename = timerfile ?? this.defaultFilename;
+		const timerfiledir = path.isAbsolute(filename)
+			? filename
+			: path.resolve(rootDir, filename);
+
 		if (!timerfiledir.startsWith(rootDir)) {
 			throw new Error(throwMessage.FilePathinvalid);
 		}
@@ -38,29 +42,20 @@ export class JSONLTimersManager<Extra extends object> extends TimersManager<"JSO
 		} catch {
 			await fs.writeFile(timerfiledir, "");
 		}
-		return manager;
+		return new this<Extra>(timerfiledir);
 	}
 
 	/**
 	 * constructor
-	 * @param {string | undefined} timerfile optional timer file path. If not provided, the default path will be used.
-	 * @description Initializes the JSONLTimersManager instance. If the timer file does not exist, an empty file is created.
-	 * @throws If file access or creation fails
-	 * @deprecated This constructor is deprecated. Please use the static `create` method instead, which performs necessary asynchronous initialization. The constructor will be made private in a future release.
-	 * @example
-	 * const manager = new JSONLTimersManager(); // Uses default timer file path
-	 * const manager = new JSONLTimersManager("/path/to/timers.jsonl"); // Uses specified timer file path 
+	 * @param {string} timerfiledir resolved timer file path.
+	 * @description Initializes the JSONLTimersManager instance.
 	 */
-	protected constructor(timerfile?: string) {
-		super(timerfile);
+	protected constructor(timerfiledir: string) {
+		super(timerfiledir);
 		this.TimersStore = new JSONLTimersStore(this.timerfiledir);
 	}
 
 	protected override TimersStore: JSONLTimersStore<Extra>;
-
-	protected override getDefaultFilename(): string {
-		return ".timers.jsonl";
-	}
 
 	protected override type: "JSONL" = "JSONL" as const;
 

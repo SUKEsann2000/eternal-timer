@@ -10,12 +10,13 @@ import { PlainTextTimersStore } from "../TimersStore/PlainTextTimersStore.js";
  * PlainTextTimersManager
  * @description
  * Manages timers stored in a PlainText file.
- * (This is a abstract class)
  *
  * - Timers are persisted in a file
  * - Expired timers are detected by polling
  */
 export class PlainTextTimersManager extends TimersManager<"PlainText", object> {
+	public static readonly defaultFilename = ".timers";
+
 	/**
 	 * create
 	 * @param {string | undefined} timerfile optional timer file path. If not provided, the default path will be used.
@@ -28,8 +29,11 @@ export class PlainTextTimersManager extends TimersManager<"PlainText", object> {
 	 */
 	public static async create(timerfile?: string): Promise<PlainTextTimersManager> {
 		const rootDir = await searchRoot();
-		const manager = new this(timerfile);
-		const timerfiledir = path.resolve(rootDir, manager.timerfiledir);
+		const filename = timerfile ?? this.defaultFilename;
+		const timerfiledir = path.isAbsolute(filename)
+			? filename
+			: path.resolve(rootDir, filename);
+
 		if (!timerfiledir.startsWith(rootDir)) {
 			throw new Error(throwMessage.FilePathinvalid);
 		}
@@ -38,33 +42,20 @@ export class PlainTextTimersManager extends TimersManager<"PlainText", object> {
 		} catch {
 			await fs.writeFile(timerfiledir, "");
 		}
-		return manager;
+		return new this(timerfiledir);
 	}
 
 	/**
 	 * constructor
-	 * @param {string | undefined} timerfile optional timer file path. If not provided, the default path will be used.
-	 * @description Initializes the PlainTextTimersManager instance. If the timer file does not exist, an empty file is created.
-	 * @throws If file access or creation fails
-	 * @deprecated This constructor is deprecated. Please use the static `create` method instead, which performs necessary asynchronous initialization. The constructor will be made private in a future release.
-	 * @example
-	 * const manager = new PlainTextTimersManager(); // Uses default timer file path
-	 * const manager = new PlainTextTimersManager("/path/to/.timers"); // Uses specified timer file path 
+	 * @param {string} timerfiledir resolved timer file path.
+	 * @description Initializes the PlainTextTimersManager instance.
 	 */
-	protected constructor(timerfile?: string) {
-		super(timerfile);
+	protected constructor(timerfiledir: string) {
+		super(timerfiledir);
 		this.TimersStore = new PlainTextTimersStore(this.timerfiledir);
 	}
 
 	protected override TimersStore: PlainTextTimersStore;
-
-	protected override getDefaultFilename(): string {
-		return ".timers";
-	}
-
-	protected async createTimersStore(): Promise<PlainTextTimersStore> {
-		return new PlainTextTimersStore(this.timerfiledir);
-	}
 
 	protected override type: "PlainText" = "PlainText" as const;
 }
