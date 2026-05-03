@@ -52,16 +52,17 @@ export class JSONLTimersManager<Extra extends object = object> extends TimersMan
 	 */
 	protected constructor(timerfile?: string) {
 		super(timerfile);
+		this.TimersStore = this.createTimersStore();
 	}
 
-	protected override TimersStore: JSONLTimersStore<Extra> | null = null;
+	protected override TimersStore: JSONLTimersStore<Extra>;
 
 	protected override getDefaultFilename(): string {
 		return ".timers.jsonl";
 	}
 
-	protected override async createTimersStore(): Promise<JSONLTimersStore<Extra>> {
-		return new JSONLTimersStore(this.timerfiledir);
+	protected override createTimersStore(): JSONLTimersStore<Extra> {
+		return new JSONLTimersStore<Extra>(this.timerfiledir);
 	}
 
 	protected override type: "JSONL" = "JSONL" as const;
@@ -82,21 +83,18 @@ export class JSONLTimersManager<Extra extends object = object> extends TimersMan
 		id: string,
 		newExtra: Extra,
 	): Promise<void> {
-		return this.runExclusive(async () => {
-			this.TimersStore ??= await this.createTimersStore();
-			try {
-				const timers = await this.TimersStore.loadTimers();
+		try {
+			const timers = await this.TimersStore.loadTimers();
 
-				const index = timers?.findIndex(t => t.id === id);
-				if (index === -1 || timers[index] === undefined) {
-					throw new Error(throwMessage.NotFound(id));
-				}
-
-				timers[index].extra = newExtra;
-				await this.TimersStore.saveTimers(timers);
-			} catch (e) {
-				throw new Error(throwMessage.ChangeExtra, { cause: e });
+			const index = timers?.findIndex(t => t.id === id);
+			if (index === -1 || timers[index] === undefined) {
+				throw new Error(throwMessage.NotFound(id));
 			}
-		});
+
+			timers[index].extra = newExtra;
+			await this.TimersStore.saveTimers(timers);
+		} catch (e) {
+			throw new Error(throwMessage.ChangeExtra, { cause: e });
+		}
 	}
 }

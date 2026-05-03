@@ -16,49 +16,24 @@ import { throwMessage } from "../throwMessage.js";
  */
 export abstract class TimersManager<T extends StorageType, Extra extends object> extends EventEmitter<T, Extra> {
 	protected readonly timerfiledir: string;
+
+	protected abstract TimersStore: TimersStore<T, Extra>;
+
 	protected checkLock: boolean = false;
 
-	protected interval: NodeJS.Timeout | undefined;
-	protected running: boolean = false;
-
-	protected TimersStore: TimersStore<T, Extra> | null = null;
-
-	private queue: Promise<void> = Promise.resolve();
-	protected runExclusive<T>(fn: () => Promise<T>) {
-		const p = this.queue.then(fn);
-		this.queue = p.then(() => {}, () => {});
-		return p;
-	}
-
 	protected abstract getDefaultFilename(): string;
-	protected abstract createTimersStore(): Promise<TimersStore<T, Extra>>;
+	protected abstract createTimersStore(): TimersStore<T, Extra>;
 	protected abstract type: T;
 
 	/**
-      * constructor
-      * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created.
-      * @param {string} [timerfile] (string, optional) Configuration timer file path and it is treated as the timer file path.
-      * @throws If file access or creation fails
-      * @example
-      * const manager = new TimersManager(); // Uses default timer file path
-      * const manager = new TimersManager("/path/to/timers.txt"); // Uses specified timer file path
-	constructor(
-		timerfile?: string,
-	) {
-		super();
-		const rootDir = searchRoot();
-		this.timerfiledir = path.resolve(rootDir, timerfile ?? this.getDefaultFilename());
-		if (!this.timerfiledir.startsWith(rootDir)) {
-			throw new Error(throwMessage.FilePathinvalid);
-		}
-		try {
-			fs.accessSync(this.timerfiledir);
-		} catch {
-			fs.writeFileSync(this.timerfiledir, "");
-		}
-	}
-	*/
-
+	 * constructor
+	 * @param {string | undefined} timerfile optional timer file path. If not provided, the default path will be used.
+	 * @description Initializes the TimersManager instance. If the timer file does not exist, an empty file is created.
+	 * @throws If file access or creation fails
+	 * @example
+	 * const manager = new TimersManager(); // Uses default timer file path
+	 * const manager = new TimersManager("/path/to/timers"); // Uses specified timer file path  
+	 */
 	protected constructor(timerfile?: string) {
 		super();
 		this.timerfiledir = timerfile ?? this.getDefaultFilename();
@@ -80,34 +55,32 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
      * const jsonlTimerId = await jsonlManager.createTimer({ length: 10000, extra: { title: "My JSONL Timer" } }); // Create a 10-second timer with extra data
      */
 	public async createTimer(options: CreateTimerOptions<T, Extra>): Promise<string> {
-		return this.runExclusive(async () => {
-			this.TimersStore ??= await this.createTimersStore();
+		this.TimersStore ??= await this.createTimersStore();
 
-			if (this.type === "JSONL" && typeof options === "number") {
-				throw new Error(throwMessage.NoExtra);
-			}
+		if (this.type === "JSONL" && typeof options === "number") {
+			throw new Error(throwMessage.NoExtra);
+		}
 
-			let length: number = typeof options === "object" ? options.length : options;
-			if (length < 0 || !Number.isFinite(length)) throw new Error(throwMessage.InvalidLength(length));
+		let length: number = typeof options === "object" ? options.length : options;
+		if (length < 0 || !Number.isFinite(length)) throw new Error(throwMessage.InvalidLength(length));
 
-			length = Math.trunc(length);
+		length = Math.trunc(length);
 
-			const id = uuidv4();
-			const now = Date.now();
-			const stopTime = now + Math.max(1, length);
+		const id = uuidv4();
+		const now = Date.now();
+		const stopTime = now + Math.max(1, length);
 
-			const newTimerData: Timer<T, Extra> = {
-				id,
-				start: now,
-				stop: stopTime,
-				...(options && typeof options === "object" && options.extra !== undefined
-					? { extra: options.extra }
-					: {}),
-			} as Timer<T, Extra>;
+		const newTimerData: Timer<T, Extra> = {
+			id,
+			start: now,
+			stop: stopTime,
+			...(options && typeof options === "object" && options.extra !== undefined
+				? { extra: options.extra }
+				: {}),
+		} as Timer<T, Extra>;
 
-			await this.TimersStore.appendTimer(newTimerData);
-			return id;
-		});
+		await this.TimersStore.appendTimer(newTimerData);
+		return id;
 	}
 
 	/**
@@ -120,19 +93,17 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
      * await manager.removeTimer(id);
      */
 	public async removeTimer(id: string): Promise<void> {
-		return this.runExclusive(async () => {
-			this.TimersStore ??= await this.createTimersStore();
-			const timers = await this.TimersStore.loadTimers();
+		this.TimersStore ??= await this.createTimersStore();
+		const timers = await this.TimersStore.loadTimers();
 
-			const index = timers.findIndex(t => t.id === id);
-			if (index === -1 || timers[index] === undefined) {
-				throw new Error(throwMessage.NotFound(id));
-			}
+		const index = timers.findIndex(t => t.id === id);
+		if (index === -1 || timers[index] === undefined) {
+			throw new Error(throwMessage.NotFound(id));
+		}
 
-			timers.splice(index, 1);
-			await this.TimersStore.saveTimers(timers);
-			return;
-		});
+		timers.splice(index, 1);
+		await this.TimersStore.saveTimers(timers);
+		return;
 	}
 
 	/**
@@ -149,36 +120,33 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 		interval: number = 200,
 	): Promise<void> {
 
-		if (this.running) return;
-		this.running = true;
-
-		this.TimersStore ??= await this.createTimersStore();
+		if (this.TimersStore.interval) {
+			throw new Error(throwMessage.AlreadyRunning);
+		}
 
 		const loop = async () => {
-			if (!this.running) return;
+			if (!this.TimersStore.interval) return;
 			if (this.checkLock) return;
 
 			this.checkLock = true;
 
 			try {
-				const expiredTimers = await this.runExclusive(async () => {
-					const allTimers = await this.TimersStore!.loadTimers();
-					const now = Date.now();
+				const allTimers = await this.TimersStore!.loadTimers();
+				const now = Date.now();
 
-					const expired: Timer<T, Extra>[] = [];
-					const active: Timer<T, Extra>[] = [];
+				const expired: Timer<T, Extra>[] = [];
+				const active: Timer<T, Extra>[] = [];
 
-					for (const timer of allTimers) {
-						if (timer.stop <= now) expired.push(timer);
-						else active.push(timer);
-					}
+				for (const timer of allTimers) {
+					if (timer.stop <= now) expired.push(timer);
+					else active.push(timer);
+				}
 
-					if (expired.length > 0) {
-						await this.TimersStore!.saveTimers(active);
-					}
+				if (expired.length > 0) {
+					await this.TimersStore!.saveTimers(active);
+				}
 
-					return expired;
-				});
+				const expiredTimers = expired;
 
 				for (const timer of expiredTimers) {
 					try {
@@ -190,17 +158,17 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 
 			} catch (e) {
 				await this.emit("errored", e instanceof Error ? e : new Error(String(e)));
-				this.running = false;
+				this.TimersStore.interval = null;
 			} finally {
 				this.checkLock = false;
-				if (this.running) {
-					this.interval = setTimeout(loop, interval);
+				if (this.TimersStore.interval) {
+					this.TimersStore.interval.refresh();
 				}
 			}
 		};
 
 		this.emit("started", void 0);
-		this.interval = setTimeout(loop, interval);
+		this.TimersStore.interval = setInterval(loop, interval);
 	}
 
 	/**
@@ -214,10 +182,10 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	 * await manager.checkStop();
 	 */
 	public async checkStop(): Promise<void> {
-		this.running = false;
-		if (this.interval) {
-			clearTimeout(this.interval);
-			this.interval = undefined;
+		this.TimersStore.interval = null;
+		if (this.TimersStore.interval) {
+			clearInterval(this.TimersStore.interval);
+			this.TimersStore.interval = null;
 		}
 		this.emit("stopped", void 0);
 	}
@@ -245,11 +213,9 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 		* console.log(JSON.stringify(timers))
 		*/
 	public async showTimers(): Promise<Timer<T, Extra>[]> {
-		return this.runExclusive(async () => {
-			this.TimersStore ??= await this.createTimersStore();
-			const timersData = await this.TimersStore.loadTimers();
-			return timersData;
-		});
+		this.TimersStore ??= await this.createTimersStore();
+		const timersData = await this.TimersStore.loadTimers();
+		return timersData;
 	}
 
 	/**
@@ -261,28 +227,26 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
       * @throws If file operation fails
       */
 	public async adjustRemainingTime(id: string, delay: number): Promise<void> {
-		return this.runExclusive(async () => {
-			if (typeof delay !== "number" || !Number.isFinite(delay)) {
-				throw new Error(throwMessage.InvalidAdjustment(delay));
-			}
+		if (typeof delay !== "number" || !Number.isFinite(delay)) {
+			throw new Error(throwMessage.InvalidAdjustment(delay));
+		}
 
-			this.TimersStore ??= await this.createTimersStore();
-			const timers = await this.TimersStore.loadTimers();
+		this.TimersStore ??= await this.createTimersStore();
+		const timers = await this.TimersStore.loadTimers();
 
-			const index = timers.findIndex(t => t.id === id);
-			if (index === -1 || timers[index] === undefined) {
-				throw new Error(throwMessage.NotFound(id));
-			}
+		const index = timers.findIndex(t => t.id === id);
+		if (index === -1 || timers[index] === undefined) {
+			throw new Error(throwMessage.NotFound(id));
+		}
 
-			const now = Date.now();
+		const now = Date.now();
 
-			const timer = timers[index];
-			const remaining = Math.max(0, timer.stop - now);
-			const newRemaining = Math.max(0, remaining + delay);
+		const timer = timers[index];
+		const remaining = Math.max(0, timer.stop - now);
+		const newRemaining = Math.max(0, remaining + delay);
 
-			timer.stop = now + newRemaining;
-			await this.TimersStore.saveTimers(timers);
-			return;
-		});
+		timer.stop = now + newRemaining;
+		await this.TimersStore.saveTimers(timers);
+		return;
 	 }
 }

@@ -33,15 +33,16 @@ export class PlainTextTimersManager extends TimersManager<"PlainText", object> {
 
 	protected constructor(timerfile?: string) {
 		super(timerfile);
+		this.TimersStore = this.createTimersStore();
 	}
 
-	protected override TimersStore: PlainTextTimersStore | null = null;
+	protected override TimersStore: PlainTextTimersStore;
 
 	protected override getDefaultFilename(): string {
 		return ".timers";
 	}
 
-	protected async createTimersStore(): Promise<PlainTextTimersStore> {
+	protected override createTimersStore(): PlainTextTimersStore {
 		return new PlainTextTimersStore(this.timerfiledir);
 	}
 
