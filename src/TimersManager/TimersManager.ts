@@ -20,8 +20,11 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	// lock if the check loop is running, or not. This is used to prevent multiple check loops from running simultaneously and to indicate whether a file operation is in progress (e.g. loading or saving timers).
 	protected checkLock: boolean = false;
 
+	/*
 	// Interval id of the check loop. If the loop is not running, this is undefined.
 	protected interval: NodeJS.Timeout | undefined;
+	*/
+	protected static intervals: Map<string, NodeJS.Timeout> = new Map();
 	// Indicates whether the check loop is running. This is used to control the loop and to prevent starting multiple loops simultaneously.
 	protected running: boolean = false;
 
@@ -174,13 +177,16 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 			} finally {
 				this.checkLock = false;
 				if (this.running) {
-					this.interval = setTimeout(loop, interval);
+					TimersManager.intervals.set(this.timerfiledir, setTimeout(loop, interval));
 				}
 			}
 		};
 
 		this.emit("started", void 0);
-		this.interval = setTimeout(loop, interval);
+		if (TimersManager.intervals.has(this.timerfiledir)) {
+			throw new Error(throwMessage.AlreadyExists);
+		}
+		TimersManager.intervals.set(this.timerfiledir, setTimeout(loop, interval));
 	}
 
 	/**
@@ -194,9 +200,9 @@ export abstract class TimersManager<T extends StorageType, Extra extends object>
 	 */
 	public async checkStop(): Promise<void> {
 		this.running = false;
-		if (this.interval) {
-			clearTimeout(this.interval);
-			this.interval = undefined;
+		if (TimersManager.intervals.has(this.timerfiledir)) {
+			clearTimeout(TimersManager.intervals.get(this.timerfiledir)!);
+			TimersManager.intervals.delete(this.timerfiledir);
 		}
 		this.emit("stopped", void 0);
 	}

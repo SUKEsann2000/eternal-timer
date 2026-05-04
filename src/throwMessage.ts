@@ -9,4 +9,5 @@ export const throwMessage = {
 	LoadTimerData: "Error when loading timer data",
 	SaveTimerData: "Error when saving timer data",
 	AppendTimerData: "Error when appending timer data",
+	AlreadyExists: "The loop is already running",
 };
